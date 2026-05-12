@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SubscriptionStatus {
+  FREE
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum AutomationStatus {
+  ACTIVE
+  DRAFT
+  PAUSED
+}
+
+enum SenderType {
+  CUSTOMER
+  BOT
+  HUMAN
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId  String   @unique
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  restaurants Restaurant[]
+}
+
+model Restaurant {
+  id                    String   @id @default(cuid())
+  ownerId               String
+  name                  String
+  whatsappNumber        String?
+  whatsappPhoneNumberId String?
+  address               String?
+  openingTime           String?
+  closingTime           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  menuItems     MenuItem[]
+  faqs          FAQ[]
+  automations   Automation[]
+  conversations Conversation[]
+  deliveryZones DeliveryZone[]
+  orders        Order[]
+  subscription  Subscription?
+}
+
+model MenuItem {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  category     String?
+  price        Int
+  available    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model FAQ {
+  id           String   @id @default(cuid())
+  restaurantId String
+  question     String
+  answer       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model Automation {
+  id           String           @id @default(cuid())
+  restaurantId String
+  name         String
+  triggers     String[]
+  response     String
+  status       AutomationStatus @default(ACTIVE)
+  usedCount    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id             String   @id @default(cuid())
+  restaurantId   String
+  customerName   String?
+  customerPhone  String
+  status         String   @default("BOT_ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  orders       Order[]
+
+  @@unique([restaurantId, customerPhone])
+}
+
+model Message {
+  id             String     @id @default(cuid())
+  conversationId String
+  senderType     SenderType
+  content        String
+  createdAt      DateTime   @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  restaurantId         String             @unique
+  plan                String             @default("starter")
+  status              SubscriptionStatus @default(FREE)
+  paystackCustomerCode String?
+  paystackSubscriptionCode String?
+  currentPeriodEnd    DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  restaurantId    String
+  conversationId  String?
+  customerName    String?
+  customerPhone   String
+  deliveryAddress String?
+  deliveryFee     Int         @default(0)
+  notes           String?
+  totalAmount     Int         @default(0)
+  status          OrderStatus @default(NEW)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  name      String
+  quantity  Int      @default(1)
+  price     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model DeliveryZone {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  area          String
+  fee           Int      @default(0)
+  estimatedTime String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,223 @@
+import { NextRequest, NextResponse } from "next/server";
+import { matchAutomation } from "@/lib/automation-matcher";
+import {
+  saveBotMessage,
+  saveIncomingCustomerMessage,
+} from "@/lib/conversations";
+import { buildDeliveryReply, isDeliveryRequest } from "@/lib/delivery-reply";
+import { buildMenuReply, isMenuRequest } from "@/lib/menu-reply";
+import { prisma } from "@/lib/prisma";
+import { sendWhatsAppText } from "@/lib/whatsapp";
+import { handleWhatsAppOrder } from "@/lib/whatsapp-orders";
+
+async function sendWhatsAppTextSafely({
+  to,
+  message,
+  phoneNumberId,
+}: {
+  to: string;
+  message: string;
+  phoneNumberId: string;
+}) {
+  try {
+    await sendWhatsAppText({
+      to,
+      message,
+      phoneNumberId,
+    });
+  } catch (error) {
+    console.warn("WhatsApp send skipped or failed:", error);
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+
+  const mode = searchParams.get("hub.mode");
+  const token = searchParams.get("hub.verify_token");
+  const challenge = searchParams.get("hub.challenge");
+
+  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+
+  if (mode === "subscribe" && token === verifyToken) {
+    return new NextResponse(challenge, { status: 200 });
+  }
+
+  return NextResponse.json(
+    { error: "Webhook verification failed." },
+    { status: 403 }
+  );
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const entry = body.entry?.[0];
+    const change = entry?.changes?.[0];
+    const value = change?.value;
+    const message = value?.messages?.[0];
+
+    if (!message) {
+      return NextResponse.json({ received: true });
+    }
+
+    const phoneNumberId = value?.metadata?.phone_number_id;
+    const from = message.from;
+    const text = message.text?.body;
+    const contactName = value?.contacts?.[0]?.profile?.name;
+
+    if (!phoneNumberId || !from || !text) {
+      return NextResponse.json({ received: true });
+    }
+
+    const restaurant = await prisma.restaurant.findFirst({
+      where: {
+        whatsappPhoneNumberId: phoneNumberId,
+      },
+    });
+
+    if (!restaurant) {
+      console.warn("No restaurant found for phone_number_id:", phoneNumberId);
+      return NextResponse.json({ received: true });
+    }
+
+    const conversation = await saveIncomingCustomerMessage({
+      restaurantId: restaurant.id,
+      customerPhone: from,
+      customerName: contactName,
+      message: text,
+    });
+
+    if (conversation.status !== "HUMAN_TAKEOVER" && isMenuRequest(text)) {
+      const menuReply = await buildMenuReply(restaurant.id);
+
+      await sendWhatsAppTextSafely({
+        to: from,
+        message: menuReply,
+        phoneNumberId,
+      });
+
+      await saveBotMessage({
+        conversationId: conversation.id,
+        message: menuReply,
+      });
+
+      return NextResponse.json({ received: true });
+    }
+
+    const activeOrder = await prisma.order.findFirst({
+      where: {
+        restaurantId: restaurant.id,
+        conversationId: conversation.id,
+        status: {
+          in: ["NEW", "CONFIRMED", "PREPARING", "READY"],
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (activeOrder) {
+      const orderResult = await handleWhatsAppOrder({
+        restaurantId: restaurant.id,
+        conversationId: conversation.id,
+        customerName: contactName,
+        customerPhone: from,
+        message: text,
+      });
+
+      if (orderResult) {
+        await sendWhatsAppTextSafely({
+          to: from,
+          message: orderResult.reply,
+          phoneNumberId,
+        });
+
+        await saveBotMessage({
+          conversationId: conversation.id,
+          message: orderResult.reply,
+        });
+
+        return NextResponse.json({ received: true });
+      }
+    }
+
+    if (conversation.status !== "HUMAN_TAKEOVER" && isDeliveryRequest(text)) {
+      const deliveryReply = await buildDeliveryReply({
+        restaurantId: restaurant.id,
+        message: text,
+      });
+
+      await sendWhatsAppTextSafely({
+        to: from,
+        message: deliveryReply,
+        phoneNumberId,
+      });
+
+      await saveBotMessage({
+        conversationId: conversation.id,
+        message: deliveryReply,
+      });
+
+      return NextResponse.json({ received: true });
+    }
+
+    const orderResult = await handleWhatsAppOrder({
+      restaurantId: restaurant.id,
+      conversationId: conversation.id,
+      customerName: contactName,
+      customerPhone: from,
+      message: text,
+    });
+
+    if (orderResult) {
+      await sendWhatsAppTextSafely({
+        to: from,
+        message: orderResult.reply,
+        phoneNumberId,
+      });
+
+      await saveBotMessage({
+        conversationId: conversation.id,
+        message: orderResult.reply,
+      });
+
+      return NextResponse.json({ received: true });
+    }
+
+    if (conversation.status === "HUMAN_TAKEOVER") {
+      return NextResponse.json({ received: true });
+    }
+
+    const automation = await matchAutomation({
+      restaurantId: restaurant.id,
+      message: text,
+    });
+
+    if (!automation) {
+      return NextResponse.json({ received: true });
+    }
+
+    await sendWhatsAppTextSafely({
+      to: from,
+      message: automation.response,
+      phoneNumberId,
+    });
+
+    await saveBotMessage({
+      conversationId: conversation.id,
+      message: automation.response,
+    });
+
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error("WhatsApp webhook error:", error);
+
+    return NextResponse.json(
+      { error: "Webhook handler failed." },
+      { status: 500 }
+    );
+  }
+}
