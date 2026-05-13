@@ -84,6 +84,7 @@ model Restaurant {
   address               String?
   openingTime           String?
   closingTime           String?
+  aiAutoReplyEnabled    Boolean  @default(false)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -97,6 +98,7 @@ model Restaurant {
   subscription  Subscription?
   pilotClients  PilotClient[]
   teamMembers   TeamMember[]
+  knowledgeBaseItems KnowledgeBaseItem[]
 }
 
 model MenuItem {
@@ -234,6 +236,19 @@ model DeliveryZone {
   isDemo        Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model KnowledgeBaseItem {
+  id           String   @id @default(cuid())
+  restaurantId String
+  title        String
+  content      String
+  category     String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }

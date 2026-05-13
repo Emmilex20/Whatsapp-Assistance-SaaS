@@ -63,18 +63,32 @@ export async function resumeBotAutomation(formData: FormData) {
 }
 
 export async function sendHumanReply(formData: FormData) {
+  const restaurant = await getOrCreateCurrentRestaurant();
+
+  if (!restaurant) {
+    return { error: "Restaurant not found." };
+  }
+
   const conversationId = String(formData.get("conversationId") || "");
   const message = String(formData.get("message") || "").trim();
 
   if (!conversationId || !message) {
-    throw new Error("Conversation ID and message are required.");
+    return { error: "Conversation ID and message are required." };
   }
 
-  const { conversation } =
-    await getConversationForCurrentRestaurant(conversationId);
+  const conversation = await prisma.conversation.findFirst({
+    where: {
+      id: conversationId,
+      restaurantId: restaurant.id,
+    },
+  });
+
+  if (!conversation) {
+    return { error: "Conversation not found." };
+  }
 
   if (conversation.status !== "HUMAN_TAKEOVER") {
-    throw new Error("Enable human takeover before sending a manual reply.");
+    return { error: "Enable human takeover before sending a manual reply." };
   }
 
   await prisma.message.create({
@@ -91,4 +105,7 @@ export async function sendHumanReply(formData: FormData) {
   });
 
   revalidatePath("/dashboard/inbox");
+  revalidatePath("/dashboard/customers");
+
+  return { success: "Reply sent successfully." };
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { generateAIAutoReply } from "@/lib/ai/auto-reply";
 import { matchAutomation } from "@/lib/automation-matcher";
 import {
   saveBotMessage,
@@ -179,6 +180,43 @@ export async function POST(request: NextRequest) {
     });
 
     if (!automation) {
+      if (
+        restaurant.aiAutoReplyEnabled &&
+        conversation.status !== "HUMAN_TAKEOVER"
+      ) {
+        const aiResult = await generateAIAutoReply({
+          restaurantId: restaurant.id,
+          conversationId: conversation.id,
+          latestCustomerMessage: text,
+        });
+
+        if (!aiResult.blocked && aiResult.reply) {
+          await prisma.message.create({
+            data: {
+              conversationId: conversation.id,
+              senderType: "BOT",
+              content: aiResult.reply,
+            },
+          });
+
+          await safeSendWhatsAppText({
+            to: from,
+            message: aiResult.reply,
+          });
+        }
+
+        if (aiResult.blocked) {
+          await prisma.conversation.update({
+            where: { id: conversation.id },
+            data: {
+              priority: "HIGH",
+              workflowStatus: "OPEN",
+              internalNotes: `AI auto-reply blocked: ${aiResult.reason}`,
+            },
+          });
+        }
+      }
+
       return NextResponse.json({ received: true });
     }
 

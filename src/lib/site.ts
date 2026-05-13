@@ -1,6 +1,8 @@
 import {
   BarChart3,
   Bot,
+  BookOpen,
+  BrainCircuit,
   Building2,
   CreditCard,
   Handshake,
@@ -44,6 +46,8 @@ export const dashboardLinks = [
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { label: "Restaurants", href: "/dashboard/restaurants", icon: Building2 },
+  { label: "AI Settings", href: "/dashboard/settings/ai", icon: BrainCircuit },
+  { label: "Knowledge", href: "/dashboard/knowledge", icon: BookOpen },
   { label: "Settings", href: "/dashboard/settings/business", icon: Settings },
   { label: "Delivery", href: "/dashboard/settings/delivery", icon: Truck },
   { label: "FAQs", href: "/dashboard/automations/faqs", icon: CircleHelp },

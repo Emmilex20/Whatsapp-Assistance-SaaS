@@ -6,7 +6,6 @@ import {
   PauseCircle,
   Phone,
   PlayCircle,
-  Send,
   UserRound,
 } from "lucide-react";
 import type {
@@ -15,14 +14,15 @@ import type {
   Prisma,
 } from "@/generated/prisma/client";
 import { assignConversation } from "@/actions/assignments";
-import { enableHumanTakeover, resumeBotAutomation, sendHumanReply } from "@/actions/inbox";
+import { enableHumanTakeover, resumeBotAutomation } from "@/actions/inbox";
 import { updateConversationInternalNotes } from "@/actions/internal-notes";
+import { AISuggestionPanel } from "@/components/inbox/ai-suggestion-panel";
 import { ConversationLabelsForm } from "@/components/inbox/conversation-labels-form";
+import { ManualReplyForm } from "@/components/inbox/manual-reply-form";
 import { ConversationStatusForm } from "@/components/inbox/conversation-status-form";
 import { InternalNotesForm } from "@/components/shared/internal-notes-form";
 import { AssignmentSelect } from "@/components/team/assignment-select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { getRestaurantBilling } from "@/lib/billing";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { priorityStyles } from "@/lib/conversation-labels";
@@ -721,31 +721,12 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                   </p>
                 </div>
 
-                <form action={sendHumanReply} className="flex gap-2">
-                  <input
-                    type="hidden"
-                    name="conversationId"
-                    value={selectedConversation?.id || ""}
-                  />
-
-                  <Input
-                    name="message"
+                {selectedConversation && (
+                  <ManualReplyForm
+                    conversationId={selectedConversation.id}
                     disabled={!isHumanTakeover}
-                    placeholder={
-                      isHumanTakeover
-                        ? "Type a manual reply..."
-                        : "Enable human takeover to reply..."
-                    }
-                    className="h-11 rounded-full border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-
-                  <Button
-                    disabled={!isHumanTakeover}
-                    className="h-11 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Send size={16} />
-                  </Button>
-                </form>
+                )}
               </div>
             </div>
           </main>
@@ -833,6 +814,17 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
               </p>
             </div>
 
+            <div className="mt-5 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5">
+              <h2 className="text-base font-semibold text-white">
+                AI auto-reply safety
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-yellow-100">
+                AI auto-reply will not run during human takeover. Messages
+                about refunds, complaints, wrong orders, sickness, fraud, or
+                cancellation are blocked and should be handled manually.
+              </p>
+            </div>
+
             {selectedConversation && (
               <>
                 <div className="mt-5">
@@ -848,6 +840,10 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                     priority={selectedConversation.priority}
                     tags={selectedConversation.tags}
                   />
+                </div>
+
+                <div className="mt-5">
+                  <AISuggestionPanel conversationId={selectedConversation.id} />
                 </div>
 
                 <div className="mt-5">
