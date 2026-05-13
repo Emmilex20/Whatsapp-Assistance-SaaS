@@ -4,35 +4,35 @@ import { getCurrentDbUser } from "@/lib/current-user";
 export async function getCurrentRestaurant() {
   const user = await getCurrentDbUser();
 
-  if (!user) {
-    return null;
+  if (!user) return null;
+
+  if (user.activeRestaurantId) {
+    const activeRestaurant = await prisma.restaurant.findFirst({
+      where: {
+        id: user.activeRestaurantId,
+        ownerId: user.id,
+      },
+    });
+
+    if (activeRestaurant) return activeRestaurant;
   }
 
-  const restaurant = await prisma.restaurant.findFirst({
-    where: {
-      ownerId: user.id,
-    },
+  const firstRestaurant = await prisma.restaurant.findFirst({
+    where: { ownerId: user.id },
+    orderBy: { createdAt: "asc" },
   });
 
-  return restaurant;
+  return firstRestaurant;
 }
 
 export async function getOrCreateCurrentRestaurant() {
   const user = await getCurrentDbUser();
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
-  const existingRestaurant = await prisma.restaurant.findFirst({
-    where: {
-      ownerId: user.id,
-    },
-  });
+  const activeRestaurant = await getCurrentRestaurant();
 
-  if (existingRestaurant) {
-    return existingRestaurant;
-  }
+  if (activeRestaurant) return activeRestaurant;
 
   const restaurant = await prisma.restaurant.create({
     data: {
@@ -47,5 +47,23 @@ export async function getOrCreateCurrentRestaurant() {
     },
   });
 
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      activeRestaurantId: restaurant.id,
+    },
+  });
+
   return restaurant;
+}
+
+export async function getUserRestaurants() {
+  const user = await getCurrentDbUser();
+
+  if (!user) return [];
+
+  return prisma.restaurant.findMany({
+    where: { ownerId: user.id },
+    orderBy: { createdAt: "asc" },
+  });
 }

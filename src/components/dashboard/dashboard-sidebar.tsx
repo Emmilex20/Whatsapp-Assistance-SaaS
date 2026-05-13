@@ -1,24 +1,27 @@
-import Link from "next/link";
-import { dashboardLinks } from "@/lib/site";
+import { DashboardNavScroll } from "@/components/dashboard/dashboard-nav-scroll";
+import {
+  getCurrentRestaurant,
+  getUserRestaurants,
+} from "@/lib/current-restaurant";
+import { RestaurantSwitcher } from "@/components/dashboard/restaurant-switcher";
 import { Logo } from "@/components/shared/logo";
 
-export function DashboardSidebar() {
-  return (
-    <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-white/10 bg-zinc-950 p-4 lg:block">
-      <Logo />
+export async function DashboardSidebar() {
+  const restaurants = await getUserRestaurants();
+  const activeRestaurant = await getCurrentRestaurant();
 
-      <nav className="mt-8 space-y-1">
-        {dashboardLinks.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-white/6 hover:text-white"
-          >
-            <item.icon size={18} />
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+  return (
+    <aside className="fixed left-0 top-0 hidden h-screen w-64 flex-col border-r border-white/10 bg-zinc-950 p-4 lg:flex">
+      <div className="shrink-0">
+        <Logo />
+
+        <RestaurantSwitcher
+          restaurants={restaurants}
+          activeRestaurantId={activeRestaurant?.id}
+        />
+      </div>
+
+      <DashboardNavScroll />
     </aside>
   );
 }

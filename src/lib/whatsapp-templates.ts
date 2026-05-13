@@ -1,12 +1,16 @@
-type SendWhatsAppTextParams = {
+type SendWhatsAppTemplateParams = {
   to: string;
-  message: string;
+  templateName: string;
+  languageCode?: string;
+  parameters?: string[];
 };
 
-export async function sendWhatsAppText({
+export async function sendWhatsAppTemplate({
   to,
-  message,
-}: SendWhatsAppTextParams) {
+  templateName,
+  languageCode = "en",
+  parameters = [],
+}: SendWhatsAppTemplateParams) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const apiVersion = process.env.WHATSAPP_API_VERSION || "v21.0";
@@ -29,12 +33,22 @@ export async function sendWhatsAppText({
       },
       body: JSON.stringify({
         messaging_product: "whatsapp",
-        recipient_type: "individual",
         to,
-        type: "text",
-        text: {
-          preview_url: false,
-          body: message,
+        type: "template",
+        template: {
+          name: templateName,
+          language: { code: languageCode },
+          components: parameters.length
+            ? [
+                {
+                  type: "body",
+                  parameters: parameters.map((text) => ({
+                    type: "text",
+                    text,
+                  })),
+                },
+              ]
+            : [],
         },
       }),
     }
@@ -43,8 +57,8 @@ export async function sendWhatsAppText({
   const data = await response.json();
 
   if (!response.ok) {
-    console.error("WhatsApp send failed:", data);
-    throw new Error(data?.error?.message || "WhatsApp message failed.");
+    console.error("WhatsApp template send failed:", data);
+    throw new Error(data?.error?.message || "WhatsApp template failed.");
   }
 
   return data;

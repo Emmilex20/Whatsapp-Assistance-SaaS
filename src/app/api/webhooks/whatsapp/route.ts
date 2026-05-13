@@ -81,7 +81,6 @@ export async function POST(request: NextRequest) {
       await safeSendWhatsAppText({
         to: from,
         message: menuReply,
-        phoneNumberId,
       });
 
       await saveBotMessage({
@@ -118,7 +117,6 @@ export async function POST(request: NextRequest) {
         await safeSendWhatsAppText({
           to: from,
           message: orderResult.reply,
-          phoneNumberId,
         });
 
         await saveBotMessage({
@@ -139,7 +137,6 @@ export async function POST(request: NextRequest) {
       await safeSendWhatsAppText({
         to: from,
         message: deliveryReply,
-        phoneNumberId,
       });
 
       await saveBotMessage({
@@ -162,7 +159,6 @@ export async function POST(request: NextRequest) {
       await safeSendWhatsAppText({
         to: from,
         message: orderResult.reply,
-        phoneNumberId,
       });
 
       await saveBotMessage({
@@ -189,7 +185,6 @@ export async function POST(request: NextRequest) {
     await safeSendWhatsAppText({
       to: from,
       message: automation.response,
-      phoneNumberId,
     });
 
     await saveBotMessage({

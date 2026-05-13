@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Bot,
+  Building2,
   CreditCard,
   Handshake,
   Home,
@@ -12,6 +13,7 @@ import {
   Sparkles,
   Truck,
   Utensils,
+  UserPlus,
   Users,
   Workflow,
   Rocket,
@@ -36,10 +38,12 @@ export const dashboardLinks = [
   { label: "Menu", href: "/dashboard/menu", icon: Utensils },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
+  { label: "Team", href: "/dashboard/team", icon: UserPlus },
   { label: "Pilots", href: "/dashboard/pilots", icon: Handshake },
   { label: "Outreach", href: "/dashboard/outreach", icon: Megaphone },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
+  { label: "Restaurants", href: "/dashboard/restaurants", icon: Building2 },
   { label: "Settings", href: "/dashboard/settings/business", icon: Settings },
   { label: "Delivery", href: "/dashboard/settings/delivery", icon: Truck },
   { label: "FAQs", href: "/dashboard/automations/faqs", icon: CircleHelp },
@@ -475,6 +479,12 @@ export const outreachScripts = [
     channel: "WhatsApp / Instagram DM",
     message:
       "Thanks for checking the demo. If you are interested, I can help set up a simple version for your business with your menu, delivery areas, and common customer questions.",
+  },
+  {
+    title: "Follow-up after interest",
+    channel: "WhatsApp / Instagram DM",
+    message:
+      "Hi. Just following up on the WhatsApp assistant demo. I can help set up a simple version for your business with your menu, delivery fees, and common replies so customers get faster responses. Would you like us to test it with your business this week?",
   },
 ];
 

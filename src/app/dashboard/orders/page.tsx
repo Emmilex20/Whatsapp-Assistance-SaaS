@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Clock, Eye, MapPin, Plus, ShoppingBag, UserRound } from "lucide-react";
 import type { OrderStatus } from "@/generated/prisma/client";
+import { assignOrder } from "@/actions/assignments";
 import { confirmOrder, updateOrderStatus } from "@/actions/orders";
 import { EmptyState } from "@/components/shared/empty-state";
+import { AssignmentSelect } from "@/components/team/assignment-select";
 import { Button } from "@/components/ui/button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { getOrderNextAction } from "@/lib/order-workflow";
@@ -25,19 +27,79 @@ const nextStatuses: OrderStatus[] = [
   "CANCELLED",
 ];
 
-export default async function OrdersPage() {
+const statusFilters: ("all" | OrderStatus)[] = [
+  "all",
+  "NEW",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+  "DELIVERED",
+  "CANCELLED",
+];
+
+type OrdersPageProps = {
+  searchParams: Promise<{
+    assigned?: string;
+    status?: string;
+  }>;
+};
+
+export default async function OrdersPage({ searchParams }: OrdersPageProps) {
+  const params = await searchParams;
+  const assignedFilter = params.assigned || "all";
+  const rawStatusFilter = params.status || "all";
+  const statusFilter = statusFilters.includes(
+    rawStatusFilter as "all" | OrderStatus
+  )
+    ? rawStatusFilter
+    : "all";
   const restaurant = await getOrCreateCurrentRestaurant();
+
+  const orderWhere = {
+    restaurantId: restaurant?.id || "",
+    ...(assignedFilter === "unassigned"
+      ? { assignedTeamMemberId: null }
+      : assignedFilter !== "all"
+        ? { assignedTeamMemberId: assignedFilter }
+        : {}),
+    ...(statusFilter !== "all" ? { status: statusFilter as OrderStatus } : {}),
+  };
 
   const orders = restaurant
     ? await prisma.order.findMany({
-        where: { restaurantId: restaurant.id },
+        where: orderWhere,
         orderBy: { createdAt: "desc" },
         include: {
           items: true,
           conversation: true,
+          assignedTeamMember: true,
         },
       })
     : [];
+
+  const teamMembers = restaurant
+    ? await prisma.teamMember.findMany({
+        where: { restaurantId: restaurant.id },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  function ordersFilterHref({
+    assigned = assignedFilter,
+    status = statusFilter,
+  }: {
+    assigned?: string;
+    status?: string;
+  }) {
+    const nextParams = new URLSearchParams();
+
+    if (assigned && assigned !== "all") nextParams.set("assigned", assigned);
+    if (status && status !== "all") nextParams.set("status", status);
+
+    const query = nextParams.toString();
+
+    return query ? `/dashboard/orders?${query}` : "/dashboard/orders";
+  }
 
   return (
     <div className="space-y-6">
@@ -58,6 +120,74 @@ export default async function OrdersPage() {
             New order
           </Button>
         </Link>
+      </section>
+
+      <section className="space-y-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+        <div>
+          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
+            Filter by assignment
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={ordersFilterHref({ assigned: "all" })}
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                assignedFilter === "all"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              All orders
+            </a>
+
+            <a
+              href={ordersFilterHref({ assigned: "unassigned" })}
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                assignedFilter === "unassigned"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              Unassigned
+            </a>
+
+            {teamMembers.map((member) => (
+              <a
+                key={member.id}
+                href={ordersFilterHref({ assigned: member.id })}
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  assignedFilter === member.id
+                    ? "bg-emerald-500 text-white"
+                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {member.name || member.email}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
+            Filter by status
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {statusFilters.map((status) => (
+              <a
+                key={status}
+                href={ordersFilterHref({ status })}
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  statusFilter === status
+                    ? "bg-emerald-500 text-white"
+                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {status === "all" ? "All statuses" : status.toLowerCase()}
+              </a>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -90,10 +220,10 @@ export default async function OrdersPage() {
       {orders.length === 0 ? (
         <EmptyState
           icon={ShoppingBag}
-          title="No orders yet"
-          description="Orders will appear here after WhatsApp order collection is connected or when you create one manually."
-          action="Create first order"
-          href="/dashboard/orders/new"
+          title="No orders found"
+          description="No orders match the selected filters. Try viewing all orders or changing the assignment/status filter."
+          action="View all orders"
+          href="/dashboard/orders"
         />
       ) : (
         <section className="grid gap-4">
@@ -126,6 +256,18 @@ export default async function OrdersPage() {
                       {order.conversationId && (
                         <span className="rounded-full bg-blue-400/10 px-3 py-1 text-xs text-blue-300">
                           WhatsApp
+                        </span>
+                      )}
+
+                      {order.assignedTeamMember ? (
+                        <span className="rounded-full bg-purple-400/10 px-3 py-1 text-xs text-purple-300">
+                          Assigned:{" "}
+                          {order.assignedTeamMember.name ||
+                            order.assignedTeamMember.email}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-zinc-400/10 px-3 py-1 text-xs text-zinc-300">
+                          Unassigned
                         </span>
                       )}
                     </div>
@@ -199,6 +341,18 @@ export default async function OrdersPage() {
                       </p>
                     )}
 
+                    {order.internalNotes && (
+                      <div className="mt-3 rounded-2xl border border-white/10 bg-zinc-950/40 p-3">
+                        <p className="text-xs uppercase tracking-wide text-zinc-500">
+                          Internal note
+                        </p>
+
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">
+                          {order.internalNotes}
+                        </p>
+                      </div>
+                    )}
+
                     <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
                       <p className="text-xs uppercase tracking-wide text-emerald-300">
                         Next action
@@ -241,6 +395,41 @@ export default async function OrdersPage() {
                         </span>
                       </div>
                     </div>
+
+                    <form
+                      action={assignOrder}
+                      className="mt-4 border-t border-white/10 pt-4"
+                    >
+                      <input type="hidden" name="orderId" value={order.id} />
+
+                      <p className="mb-2 text-xs text-zinc-500">
+                        Assigned agent
+                      </p>
+
+                      <div className="flex gap-2">
+                        <AssignmentSelect
+                          name="teamMemberId"
+                          defaultValue={order.assignedTeamMemberId}
+                          teamMembers={teamMembers}
+                        />
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 rounded-full border-white/10 bg-white/[0.03] px-3 text-xs text-white hover:bg-white/10"
+                        >
+                          Save
+                        </Button>
+                      </div>
+
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Current:{" "}
+                        {order.assignedTeamMember
+                          ? order.assignedTeamMember.name ||
+                            order.assignedTeamMember.email
+                          : "Unassigned"}
+                      </p>
+                    </form>
 
                     <div className="mt-4 space-y-2">
                       {order.status === "NEW" && (

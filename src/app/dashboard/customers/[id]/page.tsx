@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { workflowStatusStyles } from "@/lib/conversation-status";
 import { getCustomerProfile } from "@/lib/customers";
 
 type PageProps = {
@@ -53,6 +54,13 @@ export default async function CustomerProfilePage({ params }: PageProps) {
           <Phone size={15} />
           {customer.customerPhone}
         </p>
+        <span
+          className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs ${
+            workflowStatusStyles[customer.workflowStatus]
+          }`}
+        >
+          {customer.workflowStatus}
+        </span>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">

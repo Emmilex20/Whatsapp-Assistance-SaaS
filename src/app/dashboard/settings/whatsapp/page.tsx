@@ -1,6 +1,15 @@
-import { CheckCircle2, Copy, ExternalLink, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WhatsAppTestSendForm } from "@/components/whatsapp/whatsapp-test-send-form";
+import { WhatsAppTemplateTestForm } from "@/components/whatsapp/whatsapp-template-test-form";
 import { whatsappSetupSteps } from "@/lib/site";
 
 export default function WhatsAppSettingsPage() {
@@ -125,6 +134,32 @@ export default function WhatsAppSettingsPage() {
           </Button>
         </div>
       </section>
+
+      <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-white">
+              Production WhatsApp setup
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              Use the production checklist before connecting a real WhatsApp
+              Business number.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/settings/whatsapp/production"
+            className="inline-flex h-10 items-center rounded-full bg-white px-5 text-sm font-medium text-zinc-950 hover:bg-zinc-200"
+          >
+            Open setup guide
+            <ArrowRight className="ml-2" size={16} />
+          </Link>
+        </div>
+      </section>
+
+      <WhatsAppTestSendForm />
+
+      <WhatsAppTemplateTestForm />
 
       <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
         <h2 className="text-base font-semibold text-white">

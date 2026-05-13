@@ -1,21 +1,43 @@
+import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowUpRight,
   BarChart3,
   Bot,
+  CheckCircle2,
+  CircleDot,
   Clock,
   Lightbulb,
   MessageSquareText,
+  ShieldCheck,
   ShoppingBag,
+  Timer,
   UserRoundCheck,
 } from "lucide-react";
 import { getRestaurantAnalytics } from "@/lib/analytics";
+import { getRestaurantBilling } from "@/lib/billing";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { getResolutionAnalytics } from "@/lib/resolution-analytics";
+import { getSlaAnalytics } from "@/lib/sla-analytics";
 
 export default async function AnalyticsPage() {
   const restaurant = await getOrCreateCurrentRestaurant();
 
   const analytics = restaurant
     ? await getRestaurantAnalytics(restaurant.id)
+    : null;
+  const subscription = restaurant
+    ? await getRestaurantBilling(restaurant.id)
+    : null;
+  const currentPlan = subscription?.plan || "starter";
+  const slaAnalytics = restaurant
+    ? await getSlaAnalytics({
+        restaurantId: restaurant.id,
+        plan: currentPlan,
+      })
+    : null;
+  const resolutionAnalytics = restaurant
+    ? await getResolutionAnalytics(restaurant.id)
     : null;
 
   const stats = [
@@ -102,6 +124,269 @@ export default async function AnalyticsPage() {
           );
         })}
       </section>
+
+      {slaAnalytics && (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              label: "SLA compliance",
+              value: `${slaAnalytics.complianceRate}%`,
+              description: "Conversations replied within tracking scope",
+              icon: ShieldCheck,
+            },
+            {
+              label: "Needs reply",
+              value: slaAnalytics.waiting,
+              description: "Customers waiting for a response",
+              icon: MessageSquareText,
+            },
+            {
+              label: "Overdue",
+              value: slaAnalytics.overdue,
+              description: "Conversations past SLA target",
+              icon: AlertTriangle,
+            },
+            {
+              label: "Replied",
+              value: slaAnalytics.replied,
+              description: "Chats with a later bot or human response",
+              icon: Bot,
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-white/10 bg-white/[0.03] p-5"
+            >
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
+                <item.icon size={18} />
+              </div>
+
+              <p className="text-sm text-zinc-500">{item.label}</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                {item.value}
+              </h2>
+              <p className="mt-2 text-sm text-zinc-400">
+                {item.description}
+              </p>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {slaAnalytics && (
+        <section className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
+          <div className="rounded-3xl border border-red-400/20 bg-red-400/10 p-5">
+            <div className="mb-5 flex items-center gap-3">
+              <AlertTriangle size={18} className="text-red-300" />
+              <div>
+                <h2 className="text-base font-semibold text-white">
+                  Overdue conversations
+                </h2>
+                <p className="text-sm text-red-100">
+                  Chats that need staff attention based on plan and priority
+                  SLA.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {slaAnalytics.overdueConversations.length ? (
+                slaAnalytics.overdueConversations.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/dashboard/inbox?conversation=${item.id}`}
+                    className="block rounded-2xl border border-red-400/20 bg-zinc-950/40 p-4 transition hover:bg-zinc-900"
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {item.customerName}
+                        </p>
+                        <p className="mt-1 text-xs text-red-100">
+                          {item.customerPhone}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-full bg-red-400/10 px-3 py-1 text-xs text-red-300">
+                          {item.minutesWaiting}m waiting
+                        </span>
+                        <span className="rounded-full bg-yellow-400/10 px-3 py-1 text-xs text-yellow-300">
+                          Target {item.targetMinutes}m
+                        </span>
+                        <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs text-zinc-300">
+                          {item.assignedTo}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-red-400/20 bg-zinc-950/40 p-5 text-sm text-red-100">
+                  No overdue conversations right now.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-base font-semibold text-white">
+              Priority breakdown
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Conversation priority and overdue pressure.
+            </p>
+
+            <div className="mt-5 space-y-3">
+              {slaAnalytics.priorityBreakdown.map((item) => (
+                <div
+                  key={item.priority}
+                  className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-white">
+                      {item.priority}
+                    </p>
+
+                    <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+                      {item.count} chats
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-sm text-zinc-400">
+                    {item.overdue} overdue
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {resolutionAnalytics && (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {[
+            {
+              label: "Open",
+              value: resolutionAnalytics.open,
+              icon: CircleDot,
+            },
+            {
+              label: "Pending",
+              value: resolutionAnalytics.pending,
+              icon: Timer,
+            },
+            {
+              label: "Resolved",
+              value: resolutionAnalytics.resolved,
+              icon: CheckCircle2,
+            },
+            {
+              label: "Resolution rate",
+              value: `${resolutionAnalytics.resolutionRate}%`,
+              icon: CheckCircle2,
+            },
+            {
+              label: "Avg resolution",
+              value: `${resolutionAnalytics.averageResolutionMinutes}m`,
+              icon: Timer,
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-white/10 bg-white/[0.03] p-5"
+            >
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
+                <item.icon size={18} />
+              </div>
+
+              <p className="text-sm text-zinc-500">{item.label}</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                {item.value}
+              </h2>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {resolutionAnalytics && (
+        <section className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-base font-semibold text-white">
+              Agent resolution breakdown
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              See how conversations are being closed across team members.
+            </p>
+
+            <div className="mt-5 space-y-3">
+              {resolutionAnalytics.agentBreakdown.map((agent) => (
+                <div
+                  key={agent.name}
+                  className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4"
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {agent.name}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        Conversation ownership
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+                        {agent.resolved} resolved
+                      </span>
+                      <span className="rounded-full bg-yellow-400/10 px-3 py-1 text-xs text-yellow-300">
+                        {agent.pending} pending
+                      </span>
+                      <span className="rounded-full bg-blue-400/10 px-3 py-1 text-xs text-blue-300">
+                        {agent.open} open
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-base font-semibold text-white">
+              Recently resolved
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Latest closed customer conversations.
+            </p>
+
+            <div className="mt-5 space-y-3">
+              {resolutionAnalytics.recentResolved.length ? (
+                resolutionAnalytics.recentResolved.map((conversation) => (
+                  <a
+                    key={conversation.id}
+                    href={`/dashboard/inbox?conversation=${conversation.id}`}
+                    className="block rounded-2xl border border-white/10 bg-zinc-900/70 p-4 transition hover:bg-zinc-800"
+                  >
+                    <p className="text-sm font-medium text-white">
+                      {conversation.customerName ||
+                        conversation.customerPhone}
+                    </p>
+
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Resolved {conversation.resolvedAt?.toLocaleString()}
+                    </p>
+                  </a>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5 text-sm text-zinc-400">
+                  No resolved conversations yet.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
@@ -281,8 +566,38 @@ export default async function AnalyticsPage() {
               </div>
             ))}
           </div>
+
+          {slaAnalytics && (
+            <div className="mt-5 rounded-3xl border border-blue-400/20 bg-blue-400/10 p-5">
+              <h2 className="text-base font-semibold text-white">
+                SLA insight
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-blue-100">
+                Current plan: {currentPlan}. Your SLA compliance is{" "}
+                {slaAnalytics.complianceRate}%. Keep overdue conversations low
+                by assigning urgent chats to agents quickly and using human
+                takeover when the bot cannot resolve the issue.
+              </p>
+            </div>
+          )}
         </div>
       </section>
+
+      {resolutionAnalytics && (
+        <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+          <h2 className="text-base font-semibold text-white">
+            Resolution insight
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-zinc-300">
+            Your current resolution rate is{" "}
+            {resolutionAnalytics.resolutionRate}%. Keep conversations clean by
+            marking completed customer issues as resolved after orders,
+            payments, or questions are fully handled.
+          </p>
+        </section>
+      )}
     </div>
   );
 }

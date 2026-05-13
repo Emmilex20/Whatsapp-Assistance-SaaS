@@ -1,7 +1,16 @@
+import Link from "next/link";
 import type { PilotStatus } from "@/generated/prisma/client";
-import { Building2, MapPin, Phone, Trash2, UserRound } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  MapPin,
+  Phone,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import { deletePilotClient, updatePilotStatus } from "@/actions/pilot";
 import { CreatePilotClientForm } from "@/components/pilots/create-pilot-client-form";
+import { PilotFollowUpForm } from "@/components/pilots/pilot-follow-up-form";
 import { Button } from "@/components/ui/button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
@@ -30,8 +39,17 @@ export default async function PilotsPage() {
     ? await prisma.pilotClient.findMany({
         where: { restaurantId: restaurant.id },
         orderBy: { createdAt: "desc" },
+        include: {
+          checklist: true,
+        },
       })
     : [];
+  const today = new Date();
+
+  const followUpsDue = pilots.filter((pilot) => {
+    if (!pilot.nextContactAt) return false;
+    return pilot.nextContactAt <= today && pilot.status !== "ACTIVE";
+  });
 
   return (
     <div className="space-y-6">
@@ -68,6 +86,10 @@ export default async function PilotsPage() {
             label: "Active",
             value: pilots.filter((pilot) => pilot.status === "ACTIVE").length,
           },
+          {
+            label: "Follow-ups due",
+            value: followUpsDue.length,
+          },
         ].map((item) => (
           <div
             key={item.label}
@@ -80,6 +102,34 @@ export default async function PilotsPage() {
           </div>
         ))}
       </section>
+
+      {followUpsDue.length > 0 && (
+        <section className="rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5">
+          <h2 className="text-base font-semibold text-white">
+            Follow-ups due today
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-yellow-100">
+            You have {followUpsDue.length} pilot client
+            {followUpsDue.length > 1 ? "s" : ""} to follow up with. Send a
+            short, calm message and move them to the next status if they
+            respond.
+          </p>
+
+          <div className="mt-4 space-y-2">
+            {followUpsDue.map((pilot) => (
+              <div
+                key={pilot.id}
+                className="rounded-2xl border border-yellow-400/20 bg-zinc-950/40 p-4"
+              >
+                <p className="text-sm font-medium text-white">
+                  {pilot.businessName}
+                </p>
+                <p className="mt-1 text-sm text-yellow-100">{pilot.phone}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <CreatePilotClientForm />
@@ -117,6 +167,20 @@ export default async function PilotsPage() {
                         >
                           {pilot.status.replaceAll("_", " ")}
                         </span>
+
+                        {pilot.status === "ACTIVE" && (
+                          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+                            Converted
+                          </span>
+                        )}
+
+                        <Link
+                          href={`/dashboard/pilots/${pilot.id}`}
+                          className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300"
+                        >
+                          View details
+                          <ArrowRight size={13} />
+                        </Link>
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-3 text-sm text-zinc-400">
@@ -152,6 +216,35 @@ export default async function PilotsPage() {
                           {pilot.notes}
                         </p>
                       )}
+
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
+                        {pilot.lastContactedAt && (
+                          <span className="rounded-full bg-white/[0.04] px-3 py-1">
+                            Last contacted:{" "}
+                            {pilot.lastContactedAt.toLocaleDateString()}
+                          </span>
+                        )}
+
+                        {pilot.nextContactAt && (
+                          <span
+                            className={`rounded-full px-3 py-1 ${
+                              pilot.nextContactAt <= today &&
+                              pilot.status !== "ACTIVE"
+                                ? "bg-yellow-400/10 text-yellow-300"
+                                : "bg-white/[0.04] text-zinc-400"
+                            }`}
+                          >
+                            Next contact:{" "}
+                            {pilot.nextContactAt.toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+
+                      {pilot.followUpNotes && (
+                        <p className="mt-3 rounded-2xl border border-white/10 bg-zinc-950/40 p-3 text-sm leading-6 text-zinc-400">
+                          Follow-up: {pilot.followUpNotes}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -182,6 +275,48 @@ export default async function PilotsPage() {
                       </form>
                     </div>
                   </div>
+
+                  {pilot.checklist.length > 0 && (
+                    <div className="mt-3">
+                      <div className="mb-2 flex items-center justify-between text-xs">
+                        <span className="text-zinc-500">Setup progress</span>
+                        <span className="text-emerald-300">
+                          {Math.round(
+                            (pilot.checklist.filter((item) => item.completed)
+                              .length /
+                              pilot.checklist.length) *
+                              100
+                          )}
+                          %
+                        </span>
+                      </div>
+
+                      <div className="h-2 rounded-full bg-zinc-800">
+                        <div
+                          className="h-2 rounded-full bg-emerald-500"
+                          style={{
+                            width: `${Math.round(
+                              (pilot.checklist.filter(
+                                (item) => item.completed
+                              ).length /
+                                pilot.checklist.length) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <PilotFollowUpForm
+                    pilotId={pilot.id}
+                    defaultNextContactAt={
+                      pilot.nextContactAt
+                        ? pilot.nextContactAt.toISOString().slice(0, 10)
+                        : ""
+                    }
+                    defaultNotes={pilot.followUpNotes || ""}
+                  />
                 </div>
               ))
             )}

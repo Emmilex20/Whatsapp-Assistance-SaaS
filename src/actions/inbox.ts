@@ -70,7 +70,7 @@ export async function sendHumanReply(formData: FormData) {
     throw new Error("Conversation ID and message are required.");
   }
 
-  const { conversation, restaurant } =
+  const { conversation } =
     await getConversationForCurrentRestaurant(conversationId);
 
   if (conversation.status !== "HUMAN_TAKEOVER") {
@@ -88,7 +88,6 @@ export async function sendHumanReply(formData: FormData) {
   await safeSendWhatsAppText({
     to: conversation.customerPhone,
     message,
-    phoneNumberId: restaurant.whatsappPhoneNumberId || undefined,
   });
 
   revalidatePath("/dashboard/inbox");

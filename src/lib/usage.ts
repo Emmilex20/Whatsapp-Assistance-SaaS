@@ -2,7 +2,7 @@ import { getPlanLimits } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
 
 export async function getRestaurantUsage(restaurantId: string) {
-  const [subscription, menuItems, automations, deliveryZones, messages] =
+  const [subscription, menuItems, automations, deliveryZones, messages, agents] =
     await Promise.all([
       prisma.subscription.findUnique({
         where: { restaurantId },
@@ -23,6 +23,9 @@ export async function getRestaurantUsage(restaurantId: string) {
           },
         },
       }),
+      prisma.teamMember.count({
+        where: { restaurantId },
+      }),
     ]);
 
   const plan = subscription?.plan || "starter";
@@ -36,7 +39,7 @@ export async function getRestaurantUsage(restaurantId: string) {
       automations,
       deliveryZones,
       messages,
-      agents: 1,
+      agents,
     },
   };
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { Menu } from "lucide-react";
+import { DashboardNavScroll } from "@/components/dashboard/dashboard-nav-scroll";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
-import { dashboardLinks } from "@/lib/site";
 import {
   Sheet,
   SheetContent,
@@ -13,8 +13,10 @@ import {
 } from "@/components/ui/sheet";
 
 export function MobileSidebar() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
           size="icon"
@@ -28,23 +30,14 @@ export function MobileSidebar() {
 
       <SheetContent
         side="left"
-        className="w-72 border-white/10 bg-zinc-950 p-4 text-white"
+        className="h-dvh w-72 border-white/10 bg-zinc-950 p-4 text-white"
       >
         <SheetTitle className="sr-only">Dashboard navigation</SheetTitle>
-        <Logo />
+        <div className="shrink-0">
+          <Logo />
+        </div>
 
-        <nav className="mt-8 space-y-1">
-          {dashboardLinks.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-white/6 hover:text-white"
-            >
-              <item.icon size={18} />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <DashboardNavScroll onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );

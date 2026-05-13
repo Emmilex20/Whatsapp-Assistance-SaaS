@@ -50,6 +50,10 @@ export async function getRestaurantAnalytics(restaurantId: string) {
     (message) => message.senderType === "HUMAN"
   );
 
+  const resolvedConversations = conversations.filter(
+    (conversation) => conversation.workflowStatus === "RESOLVED"
+  ).length;
+
   const hourMap = new Map<number, number>();
 
   customerMessages.forEach((message) => {
@@ -92,6 +96,7 @@ export async function getRestaurantAnalytics(restaurantId: string) {
     totalCustomerMessages: customerMessages.length,
     totalBotReplies: botMessages.length,
     totalHumanReplies: humanMessages.length,
+    resolvedConversations,
     totalAutomationUsage: automations.reduce(
       (sum, automation) => sum + automation.usedCount,
       0

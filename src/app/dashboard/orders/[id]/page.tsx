@@ -10,7 +10,11 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { OrderStatus } from "@/generated/prisma/client";
+import { assignOrder } from "@/actions/assignments";
+import { updateOrderInternalNotes } from "@/actions/internal-notes";
 import { confirmOrder, updateOrderStatus } from "@/actions/orders";
+import { InternalNotesForm } from "@/components/shared/internal-notes-form";
+import { AssignmentSelect } from "@/components/team/assignment-select";
 import { Button } from "@/components/ui/button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { getOrderNextAction } from "@/lib/order-workflow";
@@ -50,6 +54,7 @@ export default async function OrderDetailsPage({ params }: PageProps) {
         include: {
           items: true,
           conversation: true,
+          assignedTeamMember: true,
         },
       })
     : null;
@@ -62,6 +67,13 @@ export default async function OrderDetailsPage({ params }: PageProps) {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const teamMembers = restaurant
+    ? await prisma.teamMember.findMany({
+        where: { restaurantId: restaurant.id },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
 
   return (
     <div className="space-y-6">
@@ -265,6 +277,42 @@ export default async function OrderDetailsPage({ params }: PageProps) {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-base font-semibold text-white">
+              Assigned staff
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Assign this order to a team member.
+            </p>
+
+            <form action={assignOrder} className="mt-5">
+              <input type="hidden" name="orderId" value={order.id} />
+
+              <div className="flex gap-2">
+                <AssignmentSelect
+                  name="teamMemberId"
+                  defaultValue={order.assignedTeamMemberId}
+                  teamMembers={teamMembers}
+                />
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-full border-white/10 bg-white/[0.03] px-3 text-xs text-white hover:bg-white/10"
+                >
+                  Save
+                </Button>
+              </div>
+            </form>
+
+            <p className="mt-3 text-sm text-zinc-400">
+              Current:{" "}
+              {order.assignedTeamMember
+                ? order.assignedTeamMember.name || order.assignedTeamMember.email
+                : "Unassigned"}
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
             <div className="mb-5 flex items-center gap-3">
               <ShoppingBag size={18} className="text-emerald-400" />
               <div>
@@ -294,6 +342,15 @@ export default async function OrderDetailsPage({ params }: PageProps) {
               ))}
             </div>
           </div>
+
+          <InternalNotesForm
+            action={updateOrderInternalNotes}
+            hiddenFieldName="orderId"
+            hiddenFieldValue={order.id}
+            defaultValue={order.internalNotes}
+            title="Internal order notes"
+            description="Staff-only operational notes for delivery, payment, or customer handling."
+          />
         </aside>
       </section>
     </div>

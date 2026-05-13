@@ -3,13 +3,11 @@ import { sendWhatsAppText } from "@/lib/whatsapp";
 type SafeSendWhatsAppTextParams = {
   to: string;
   message: string;
-  phoneNumberId?: string;
 };
 
 export async function safeSendWhatsAppText({
   to,
   message,
-  phoneNumberId,
 }: SafeSendWhatsAppTextParams) {
   const enabled = process.env.WHATSAPP_SEND_ENABLED === "true";
 
@@ -29,14 +27,13 @@ export async function safeSendWhatsAppText({
     return await sendWhatsAppText({
       to,
       message,
-      phoneNumberId,
     });
   } catch (error) {
-    console.warn("WhatsApp send failed:", error);
+    console.error("Safe WhatsApp send failed:", error);
 
     return {
-      skipped: true,
-      reason: "WhatsApp send failed",
+      skipped: false,
+      error: error instanceof Error ? error.message : "Unknown WhatsApp error",
     };
   }
 }

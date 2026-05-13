@@ -9,37 +9,136 @@ import {
   Send,
   UserRound,
 } from "lucide-react";
+import type {
+  ConversationPriority,
+  ConversationWorkflowStatus,
+  Prisma,
+} from "@/generated/prisma/client";
+import { assignConversation } from "@/actions/assignments";
 import { enableHumanTakeover, resumeBotAutomation, sendHumanReply } from "@/actions/inbox";
+import { updateConversationInternalNotes } from "@/actions/internal-notes";
+import { ConversationLabelsForm } from "@/components/inbox/conversation-labels-form";
+import { ConversationStatusForm } from "@/components/inbox/conversation-status-form";
+import { InternalNotesForm } from "@/components/shared/internal-notes-form";
+import { AssignmentSelect } from "@/components/team/assignment-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getRestaurantBilling } from "@/lib/billing";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { priorityStyles } from "@/lib/conversation-labels";
+import { workflowStatusStyles } from "@/lib/conversation-status";
+import {
+  getConversationSlaStatus,
+  getSlaBadgeClass,
+} from "@/lib/conversation-sla";
 import { prisma } from "@/lib/prisma";
 
 type InboxPageProps = {
   searchParams: Promise<{
     conversation?: string;
+    assigned?: string;
+    priority?: string;
+    sla?: string;
+    workflow?: string;
   }>;
 };
 
 export default async function InboxPage({ searchParams }: InboxPageProps) {
   const params = await searchParams;
+  const assignedFilter = params.assigned || "all";
+  const slaFilter = params.sla || "all";
+  const workflowOptions: ("all" | ConversationWorkflowStatus)[] = [
+    "all",
+    "OPEN",
+    "PENDING",
+    "RESOLVED",
+  ];
+  const rawWorkflowFilter = params.workflow || "all";
+  const workflowFilter = workflowOptions.includes(
+    rawWorkflowFilter as "all" | ConversationWorkflowStatus
+  )
+    ? rawWorkflowFilter
+    : "all";
+  const priorityOptions: ("all" | ConversationPriority)[] = [
+    "all",
+    "LOW",
+    "NORMAL",
+    "HIGH",
+    "URGENT",
+  ];
+  const rawPriorityFilter = params.priority || "all";
+  const priorityFilter = priorityOptions.includes(
+    rawPriorityFilter as "all" | ConversationPriority
+  )
+    ? rawPriorityFilter
+    : "all";
   const restaurant = await getOrCreateCurrentRestaurant();
+  const subscription = restaurant
+    ? await getRestaurantBilling(restaurant.id)
+    : null;
+  const currentPlan = subscription?.plan || "starter";
+
+  const teamMembers = restaurant
+    ? await prisma.teamMember.findMany({
+        where: { restaurantId: restaurant.id },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const conversationWhere: Prisma.ConversationWhereInput = {
+    restaurantId: restaurant?.id || "",
+    ...(assignedFilter === "unassigned"
+      ? { assignedTeamMemberId: null }
+      : assignedFilter !== "all"
+        ? { assignedTeamMemberId: assignedFilter }
+        : {}),
+    ...(priorityFilter !== "all"
+      ? { priority: priorityFilter as ConversationPriority }
+      : {}),
+    ...(workflowFilter !== "all"
+      ? { workflowStatus: workflowFilter as ConversationWorkflowStatus }
+      : {}),
+  };
 
   const conversations = restaurant
     ? await prisma.conversation.findMany({
-        where: { restaurantId: restaurant.id },
+        where: conversationWhere,
         orderBy: { updatedAt: "desc" },
         include: {
+          assignedTeamMember: true,
           messages: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
+            orderBy: { createdAt: "asc" },
           },
         },
       })
     : [];
 
+  const filteredConversations = conversations.filter((conversation) => {
+    if (slaFilter === "all") return true;
+
+    const sla = getConversationSlaStatus({
+      messages: conversation.messages,
+      plan: currentPlan,
+      priority: conversation.priority,
+    });
+
+    if (slaFilter === "needs_reply") {
+      return sla.status === "WAITING" || sla.status === "OVERDUE";
+    }
+
+    if (slaFilter === "overdue") {
+      return sla.status === "OVERDUE";
+    }
+
+    if (slaFilter === "replied") {
+      return sla.status === "REPLIED";
+    }
+
+    return true;
+  });
+
   const selectedConversationId =
-    params.conversation || conversations[0]?.id || "";
+    params.conversation || filteredConversations[0]?.id || "";
 
   const selectedConversation =
     selectedConversationId && restaurant
@@ -49,14 +148,101 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
             restaurantId: restaurant.id,
           },
           include: {
+            assignedTeamMember: true,
             messages: {
               orderBy: { createdAt: "asc" },
             },
           },
-        })
-      : null;
+      })
+    : null;
 
   const isHumanTakeover = selectedConversation?.status === "HUMAN_TAKEOVER";
+  const selectedSla = selectedConversation
+    ? getConversationSlaStatus({
+        messages: selectedConversation.messages,
+        plan: currentPlan,
+        priority: selectedConversation.priority,
+      })
+    : null;
+
+  const slaSummary = {
+    needsReply: conversations.filter((conversation) => {
+      const sla = getConversationSlaStatus({
+        messages: conversation.messages,
+        plan: currentPlan,
+        priority: conversation.priority,
+      });
+      return sla.status === "WAITING" || sla.status === "OVERDUE";
+    }).length,
+    overdue: conversations.filter((conversation) => {
+      const sla = getConversationSlaStatus({
+        messages: conversation.messages,
+        plan: currentPlan,
+        priority: conversation.priority,
+      });
+      return sla.status === "OVERDUE";
+    }).length,
+    replied: conversations.filter((conversation) => {
+      const sla = getConversationSlaStatus({
+        messages: conversation.messages,
+        plan: currentPlan,
+        priority: conversation.priority,
+      });
+      return sla.status === "REPLIED";
+    }).length,
+  };
+
+  function inboxFilterHref(assigned: string) {
+    const nextParams = new URLSearchParams();
+
+    if (assigned !== "all") nextParams.set("assigned", assigned);
+    if (priorityFilter !== "all") nextParams.set("priority", priorityFilter);
+    if (slaFilter !== "all") nextParams.set("sla", slaFilter);
+    if (workflowFilter !== "all") nextParams.set("workflow", workflowFilter);
+
+    const query = nextParams.toString();
+
+    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
+  }
+
+  function priorityFilterHref(priority: string) {
+    const nextParams = new URLSearchParams();
+
+    if (assignedFilter !== "all") nextParams.set("assigned", assignedFilter);
+    if (priority !== "all") nextParams.set("priority", priority);
+    if (slaFilter !== "all") nextParams.set("sla", slaFilter);
+    if (workflowFilter !== "all") nextParams.set("workflow", workflowFilter);
+
+    const query = nextParams.toString();
+
+    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
+  }
+
+  function slaFilterHref(sla: string) {
+    const nextParams = new URLSearchParams();
+
+    if (assignedFilter !== "all") nextParams.set("assigned", assignedFilter);
+    if (priorityFilter !== "all") nextParams.set("priority", priorityFilter);
+    if (sla !== "all") nextParams.set("sla", sla);
+    if (workflowFilter !== "all") nextParams.set("workflow", workflowFilter);
+
+    const query = nextParams.toString();
+
+    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
+  }
+
+  function workflowFilterHref(workflow: string) {
+    const nextParams = new URLSearchParams();
+
+    if (assignedFilter !== "all") nextParams.set("assigned", assignedFilter);
+    if (priorityFilter !== "all") nextParams.set("priority", priorityFilter);
+    if (slaFilter !== "all") nextParams.set("sla", slaFilter);
+    if (workflow !== "all") nextParams.set("workflow", workflow);
+
+    const query = nextParams.toString();
+
+    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
+  }
 
   return (
     <div className="space-y-6">
@@ -96,18 +282,148 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
         )}
       </section>
 
-      {conversations.length === 0 ? (
-        <section className="rounded-3xl border border-white/10 bg-white/3 p-8 text-center">
+      <section className="grid gap-4 md:grid-cols-4">
+        {[
+          {
+            label: "Needs reply",
+            value: slaSummary.needsReply,
+          },
+          {
+            label: "Overdue",
+            value: slaSummary.overdue,
+          },
+          {
+            label: "Replied",
+            value: slaSummary.replied,
+          },
+          {
+            label: "Plan SLA",
+            value:
+              currentPlan === "premium"
+                ? "5m base"
+                : currentPlan === "growth"
+                  ? "15m base"
+                  : "30m base",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-3xl border border-white/10 bg-white/[0.03] p-5"
+          >
+            <p className="text-sm text-zinc-500">{item.label}</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              {item.value}
+            </h2>
+          </div>
+        ))}
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={inboxFilterHref("all")}
+            className={`rounded-full px-4 py-2 text-sm transition ${
+              assignedFilter === "all"
+                ? "bg-emerald-500 text-white"
+                : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            All chats
+          </a>
+
+          <a
+            href={inboxFilterHref("unassigned")}
+            className={`rounded-full px-4 py-2 text-sm transition ${
+              assignedFilter === "unassigned"
+                ? "bg-emerald-500 text-white"
+                : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            Unassigned
+          </a>
+
+          {teamMembers.map((member) => (
+            <a
+              key={member.id}
+              href={inboxFilterHref(member.id)}
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                assignedFilter === member.id
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {member.name || member.email}
+            </a>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {priorityOptions.map((priority) => (
+            <a
+              key={priority}
+              href={priorityFilterHref(priority)}
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                priorityFilter === priority
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {priority === "all" ? "All priorities" : priority.toLowerCase()}
+            </a>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { label: "All SLA", value: "all" },
+            { label: "Needs reply", value: "needs_reply" },
+            { label: "Overdue", value: "overdue" },
+            { label: "Replied", value: "replied" },
+          ].map((item) => (
+            <a
+              key={item.value}
+              href={slaFilterHref(item.value)}
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                slaFilter === item.value
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {workflowOptions.map((status) => (
+            <a
+              key={status}
+              href={workflowFilterHref(status)}
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                workflowFilter === status
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {status === "all" ? "All statuses" : status.toLowerCase()}
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {filteredConversations.length === 0 ? (
+        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
             <MessageSquareText size={22} />
           </div>
 
           <h2 className="mt-5 text-base font-semibold text-white">
-            No conversations yet
+            No conversations found
           </h2>
 
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-400">
-            Conversations will appear here after WhatsApp webhook messages are received and saved.
+            No conversations match this assignment filter. Try viewing all
+            chats or assign a conversation to a team member.
           </p>
         </section>
       ) : (
@@ -119,10 +435,15 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
             </div>
 
             <div className="space-y-3">
-              {conversations.map((conversation) => {
+              {filteredConversations.map((conversation) => {
                 const active = conversation.id === selectedConversation?.id;
-                const lastMessage = conversation.messages[0]?.content;
+                const lastMessage = conversation.messages.at(-1)?.content;
                 const needsHuman = conversation.status === "HUMAN_TAKEOVER";
+                const sla = getConversationSlaStatus({
+                  messages: conversation.messages,
+                  plan: currentPlan,
+                  priority: conversation.priority,
+                });
 
                 return (
                   <a
@@ -156,7 +477,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                       {lastMessage || "No message preview"}
                     </p>
 
-                    <div className="mt-3">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <span
                         className={`rounded-full px-3 py-1 text-xs ${
                           needsHuman
@@ -166,7 +487,65 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                       >
                         {needsHuman ? "Human takeover" : "Bot active"}
                       </span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs ${
+                          priorityStyles[conversation.priority]
+                        }`}
+                      >
+                        {conversation.priority}
+                      </span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs ${getSlaBadgeClass(
+                          sla.status
+                        )}`}
+                      >
+                        {sla.label}
+                        {sla.minutesWaiting > 0
+                          ? ` · ${sla.minutesWaiting}m`
+                          : ""}
+                        {` / target ${sla.targetMinutes}m`}
+                      </span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs ${
+                          workflowStatusStyles[conversation.workflowStatus]
+                        }`}
+                      >
+                        {conversation.workflowStatus}
+                      </span>
                     </div>
+
+                    {conversation.resolvedAt && (
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Resolved {conversation.resolvedAt.toLocaleDateString()}
+                      </p>
+                    )}
+
+                    {conversation.tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {conversation.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-400"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {conversation.assignedTeamMember && (
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Assigned to{" "}
+                        {conversation.assignedTeamMember.name ||
+                          conversation.assignedTeamMember.email}
+                      </p>
+                    )}
+
+                    {conversation.internalNotes && (
+                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-zinc-500">
+                        Note: {conversation.internalNotes}
+                      </p>
+                    )}
                   </a>
                 );
               })}
@@ -192,15 +571,78 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                   </div>
                 </div>
 
-                <span
-                  className={`rounded-full px-3 py-1 text-xs ${
-                    isHumanTakeover
-                      ? "bg-blue-400/10 text-blue-300"
-                      : "bg-emerald-400/10 text-emerald-300"
-                  }`}
-                >
-                  {isHumanTakeover ? "Human takeover" : "Bot active"}
-                </span>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs ${
+                      isHumanTakeover
+                        ? "bg-blue-400/10 text-blue-300"
+                        : "bg-emerald-400/10 text-emerald-300"
+                    }`}
+                  >
+                    {isHumanTakeover ? "Human takeover" : "Bot active"}
+                  </span>
+
+                  {selectedConversation && (
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs ${
+                        priorityStyles[selectedConversation.priority]
+                      }`}
+                    >
+                      {selectedConversation.priority}
+                    </span>
+                  )}
+
+                  {selectedSla && (
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs ${getSlaBadgeClass(
+                        selectedSla.status
+                      )}`}
+                    >
+                      {selectedSla.label}
+                      {selectedSla.minutesWaiting > 0
+                        ? ` · ${selectedSla.minutesWaiting}m`
+                        : ""}
+                      {` / target ${selectedSla.targetMinutes}m`}
+                    </span>
+                  )}
+
+                  {selectedConversation && (
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs ${
+                        workflowStatusStyles[
+                          selectedConversation.workflowStatus
+                        ]
+                      }`}
+                    >
+                      {selectedConversation.workflowStatus}
+                    </span>
+                  )}
+
+                  <form
+                    action={assignConversation}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      type="hidden"
+                      name="conversationId"
+                      value={selectedConversation?.id || ""}
+                    />
+
+                    <AssignmentSelect
+                      name="teamMemberId"
+                      defaultValue={selectedConversation?.assignedTeamMemberId}
+                      teamMembers={teamMembers}
+                    />
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 rounded-full border-white/10 bg-white/[0.03] px-3 text-xs text-white hover:bg-white/10"
+                    >
+                      Assign
+                    </Button>
+                  </form>
+                </div>
               </div>
 
               <div className="flex-1 space-y-4 overflow-y-auto p-4">
@@ -376,6 +818,50 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                 If a customer says &quot;I want...&quot; or &quot;order...&quot;, ServeFlow can create a draft order from the conversation.
               </p>
             </div>
+
+            <div className="mt-5 rounded-3xl border border-blue-400/20 bg-blue-400/10 p-5">
+              <h2 className="text-base font-semibold text-white">SLA rules</h2>
+
+              <p className="mt-2 text-sm leading-6 text-blue-100">
+                Current plan: {currentPlan}. Base SLA is{" "}
+                {currentPlan === "premium"
+                  ? "5 minutes"
+                  : currentPlan === "growth"
+                    ? "15 minutes"
+                    : "30 minutes"}
+                . High and urgent chats become overdue faster.
+              </p>
+            </div>
+
+            {selectedConversation && (
+              <>
+                <div className="mt-5">
+                  <ConversationStatusForm
+                    conversationId={selectedConversation.id}
+                    workflowStatus={selectedConversation.workflowStatus}
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <ConversationLabelsForm
+                    conversationId={selectedConversation.id}
+                    priority={selectedConversation.priority}
+                    tags={selectedConversation.tags}
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <InternalNotesForm
+                    action={updateConversationInternalNotes}
+                    hiddenFieldName="conversationId"
+                    hiddenFieldValue={selectedConversation.id}
+                    defaultValue={selectedConversation.internalNotes}
+                    title="Internal conversation notes"
+                    description="Private notes visible only to staff and agents."
+                  />
+                </div>
+              </>
+            )}
           </aside>
         </section>
       )}

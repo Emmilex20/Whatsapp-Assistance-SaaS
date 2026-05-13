@@ -44,13 +44,33 @@ enum PilotStatus {
   NOT_INTERESTED
 }
 
+enum TeamRole {
+  OWNER
+  MANAGER
+  AGENT
+}
+
+enum ConversationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ConversationWorkflowStatus {
+  OPEN
+  PENDING
+  RESOLVED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  clerkId  String   @unique
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  clerkId            String   @unique
+  email              String   @unique
+  name               String?
+  activeRestaurantId String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   restaurants Restaurant[]
 }
@@ -76,6 +96,7 @@ model Restaurant {
   orders        Order[]
   subscription  Subscription?
   pilotClients  PilotClient[]
+  teamMembers   TeamMember[]
 }
 
 model MenuItem {
@@ -120,18 +141,25 @@ model Automation {
 }
 
 model Conversation {
-  id             String   @id @default(cuid())
-  restaurantId   String
-  customerName   String?
-  customerPhone  String
-  status         String   @default("BOT_ACTIVE")
-  isDemo         Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  restaurantId         String
+  customerName         String?
+  customerPhone        String
+  status               String   @default("BOT_ACTIVE")
+  priority             ConversationPriority @default(NORMAL)
+  tags                 String[] @default([])
+  workflowStatus       ConversationWorkflowStatus @default(OPEN)
+  resolvedAt           DateTime?
+  assignedTeamMemberId String?
+  internalNotes        String?
+  isDemo               Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  messages     Message[]
-  orders       Order[]
+  restaurant         Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  assignedTeamMember TeamMember? @relation("ConversationAssignments", fields: [assignedTeamMemberId], references: [id], onDelete: SetNull)
+  messages           Message[]
+  orders             Order[]
 
   @@unique([restaurantId, customerPhone])
 }
@@ -162,23 +190,26 @@ model Subscription {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  restaurantId    String
-  conversationId  String?
-  customerName    String?
-  customerPhone   String
-  deliveryAddress String?
-  deliveryFee     Int         @default(0)
-  notes           String?
-  totalAmount     Int         @default(0)
-  status          OrderStatus @default(NEW)
-  isDemo          Boolean     @default(false)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id                   String      @id @default(cuid())
+  restaurantId         String
+  conversationId       String?
+  customerName         String?
+  customerPhone        String
+  deliveryAddress      String?
+  deliveryFee          Int         @default(0)
+  notes                String?
+  internalNotes        String?
+  totalAmount          Int         @default(0)
+  status               OrderStatus @default(NEW)
+  assignedTeamMemberId String?
+  isDemo               Boolean     @default(false)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
 
-  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  items        OrderItem[]
+  restaurant         Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  conversation       Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  assignedTeamMember TeamMember?   @relation("OrderAssignments", fields: [assignedTeamMemberId], references: [id], onDelete: SetNull)
+  items              OrderItem[]
 }
 
 model OrderItem {
@@ -229,8 +260,41 @@ model PilotClient {
   location     String?
   notes        String?
   status       PilotStatus @default(NEW)
+  lastContactedAt DateTime?
+  nextContactAt   DateTime?
+  followUpNotes   String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  checklist  PilotChecklistItem[]
+}
+
+model PilotChecklistItem {
+  id        String   @id @default(cuid())
+  pilotId   String
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pilot PilotClient @relation(fields: [pilotId], references: [id], onDelete: Cascade)
+}
+
+model TeamMember {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String?
+  email        String
+  role         TeamRole @default(AGENT)
+  invited      Boolean  @default(true)
+  accepted     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant            Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  assignedConversations Conversation[] @relation("ConversationAssignments")
+  assignedOrders        Order[]        @relation("OrderAssignments")
+
+  @@unique([restaurantId, email])
 }

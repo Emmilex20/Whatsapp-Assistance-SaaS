@@ -52,7 +52,7 @@ export default async function BillingPage() {
       </section>
 
       {usage && (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             {
               label: "Menu items",
@@ -73,6 +73,11 @@ export default async function BillingPage() {
               label: "Messages",
               value: usage.usage.messages,
               limit: usage.limits.monthlyMessages,
+            },
+            {
+              label: "Agents",
+              value: usage.usage.agents,
+              limit: usage.limits.agents,
             },
           ].map((item) => {
             const percent = Math.min((item.value / item.limit) * 100, 100);
