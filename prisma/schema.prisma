@@ -35,6 +35,15 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PilotStatus {
+  NEW
+  CONTACTED
+  SETUP_IN_PROGRESS
+  LIVE_TESTING
+  ACTIVE
+  NOT_INTERESTED
+}
+
 model User {
   id        String   @id @default(cuid())
   clerkId  String   @unique
@@ -66,6 +75,7 @@ model Restaurant {
   deliveryZones DeliveryZone[]
   orders        Order[]
   subscription  Subscription?
+  pilotClients  PilotClient[]
 }
 
 model MenuItem {
@@ -75,6 +85,7 @@ model MenuItem {
   category     String?
   price        Int
   available    Boolean  @default(true)
+  isDemo       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -86,6 +97,7 @@ model FAQ {
   restaurantId String
   question     String
   answer       String
+  isDemo       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -100,6 +112,7 @@ model Automation {
   response     String
   status       AutomationStatus @default(ACTIVE)
   usedCount    Int              @default(0)
+  isDemo       Boolean          @default(false)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
@@ -112,6 +125,7 @@ model Conversation {
   customerName   String?
   customerPhone  String
   status         String   @default("BOT_ACTIVE")
+  isDemo         Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -127,6 +141,7 @@ model Message {
   conversationId String
   senderType     SenderType
   content        String
+  isDemo         Boolean    @default(false)
   createdAt      DateTime   @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -157,6 +172,7 @@ model Order {
   notes           String?
   totalAmount     Int         @default(0)
   status          OrderStatus @default(NEW)
+  isDemo          Boolean     @default(false)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -171,6 +187,7 @@ model OrderItem {
   name      String
   quantity  Int      @default(1)
   price     Int      @default(0)
+  isDemo    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -183,6 +200,7 @@ model DeliveryZone {
   fee           Int      @default(0)
   estimatedTime String?
   active        Boolean  @default(true)
+  isDemo        Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -197,4 +215,22 @@ model WebhookEvent {
   payload   Json
   processed Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model PilotClient {
+  id           String      @id @default(cuid())
+  restaurantId String
+  businessName String
+  contactName  String?
+  phone        String
+  email        String?
+  instagram    String?
+  businessType String?
+  location     String?
+  notes        String?
+  status       PilotStatus @default(NEW)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }

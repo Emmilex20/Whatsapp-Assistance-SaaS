@@ -2,8 +2,10 @@ import {
   BarChart3,
   Bot,
   CreditCard,
+  Handshake,
   Home,
   Inbox,
+  Megaphone,
   MessageSquareText,
   Settings,
   ShoppingBag,
@@ -34,6 +36,8 @@ export const dashboardLinks = [
   { label: "Menu", href: "/dashboard/menu", icon: Utensils },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
+  { label: "Pilots", href: "/dashboard/pilots", icon: Handshake },
+  { label: "Outreach", href: "/dashboard/outreach", icon: Megaphone },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { label: "Settings", href: "/dashboard/settings/business", icon: Settings },
@@ -444,6 +448,33 @@ export const firstTimeSetupGuide = [
     title: "Test WhatsApp webhook",
     description: "Send a mock webhook message before going live.",
     href: "/dashboard/settings/whatsapp",
+  },
+];
+
+export const outreachScripts = [
+  {
+    title: "First message",
+    channel: "WhatsApp / Instagram DM",
+    message:
+      "Hi, I noticed your food business handles customer orders and questions on WhatsApp. I am building a WhatsApp assistant that can automatically reply to menu, delivery, price, and order questions for restaurants. I made a quick demo and would love to show you.",
+  },
+  {
+    title: "Soft follow-up",
+    channel: "WhatsApp / Instagram DM",
+    message:
+      "Hi again. Just checking if you would like to see the WhatsApp assistant demo. It can help reduce missed customer messages and make ordering easier for your food business.",
+  },
+  {
+    title: "Pilot offer",
+    channel: "WhatsApp / Instagram DM",
+    message:
+      "I am currently selecting a few food businesses for early pilot setup. I can help set up your menu, delivery replies, and order flow so customers get instant WhatsApp responses. Would you like me to show you how it works?",
+  },
+  {
+    title: "After demo",
+    channel: "WhatsApp / Instagram DM",
+    message:
+      "Thanks for checking the demo. If you are interested, I can help set up a simple version for your business with your menu, delivery areas, and common customer questions.",
   },
 ];
 

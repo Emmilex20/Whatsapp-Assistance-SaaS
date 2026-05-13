@@ -80,7 +80,7 @@ export default async function BillingPage() {
             return (
               <div
                 key={item.label}
-                className="rounded-3xl border border-white/10 bg-white/[0.03] p-5"
+                className="rounded-3xl border border-white/10 bg-white/3 p-5"
               >
                 <p className="text-sm text-zinc-500">{item.label}</p>
 
@@ -114,7 +114,7 @@ export default async function BillingPage() {
           deployment:
         </p>
         <code className="mt-3 block rounded-2xl border border-white/10 bg-zinc-950 p-4 text-sm text-zinc-300">
-          https://your-domain.com/api/webhooks/paystack
+          https://serveflow-taupe.vercel.app/api/webhooks/paystack
         </code>
       </section>
 

@@ -8,8 +8,12 @@
     "vercel-build": "prisma db push && prisma generate && next build",
     "prisma:push": "prisma db push",
     "prisma:generate": "prisma generate",
+    "seed": "prisma db seed",
     "start": "next start",
     "lint": "eslint"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.3",
@@ -39,6 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

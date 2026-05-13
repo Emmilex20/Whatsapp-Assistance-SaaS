@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleDot, Rocket } from "lucide-react";
+import { CreateDemoDataButton } from "@/components/demo/create-demo-data-button";
+import { ResetDemoDataButton } from "@/components/demo/reset-demo-data-button";
 import { launchChecklist } from "@/lib/site";
 
 export default function LaunchPage() {
@@ -27,6 +29,25 @@ export default function LaunchPage() {
         </p>
       </section>
 
+      <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-white">
+              Create demo data
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              Instantly add demo menu items, delivery zones, automations,
+              customer chats, and orders to your current account.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <CreateDemoDataButton />
+            <ResetDemoDataButton />
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-3xl border border-blue-400/20 bg-blue-400/10 p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -46,6 +67,36 @@ export default function LaunchPage() {
             </button>
           </Link>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="text-base font-semibold text-white">
+          Pre-launch QA checklist
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">
+          Use QA_CHECKLIST.md to test the full product before onboarding real
+          restaurants.
+        </p>
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="text-base font-semibold text-white">
+          Pilot onboarding target
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">
+          Before public launch, onboard 3 restaurants manually. Use the Pilots
+          page to track contact, setup, testing, and active usage.
+        </p>
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="text-base font-semibold text-white">
+          Outreach and demo sharing
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">
+          Use the Outreach page to copy simple messages and share the public
+          demo page with restaurants you want to onboard.
+        </p>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1fr_0.75fr]">

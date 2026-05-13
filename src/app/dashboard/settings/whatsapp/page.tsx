@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { whatsappSetupSteps } from "@/lib/site";
 
 export default function WhatsAppSettingsPage() {
-  const callbackUrl = "https://your-domain.com/api/webhooks/whatsapp";
+  const callbackUrl = "https://serveflow-taupe.vercel.app/api/webhooks/whatsapp";
 
   return (
     <div className="space-y-6">
@@ -126,7 +126,7 @@ export default function WhatsAppSettingsPage() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+      <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
         <h2 className="text-base font-semibold text-white">
           Local testing checklist
         </h2>
