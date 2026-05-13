@@ -3,6 +3,7 @@ import {
   getPaystackPlanCode,
   initializePaystackPayment,
 } from "@/lib/paystack";
+import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 
 const planAmounts: Record<string, number> = {
   starter: 1000000,
@@ -34,12 +35,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const restaurant = await getOrCreateCurrentRestaurant();
+
+    if (!restaurant) {
+      return NextResponse.json(
+        { error: "Restaurant not found." },
+        { status: 404 }
+      );
+    }
+
     const payment = await initializePaystackPayment({
       email,
       amount,
       plan: planCode,
       metadata: {
         planId,
+        restaurantId: restaurant.id,
         product: "ServeFlow",
       },
     });

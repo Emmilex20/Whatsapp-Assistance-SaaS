@@ -162,7 +162,7 @@ export default async function CustomerProfilePage({ params }: PageProps) {
             ) : (
               customer.orders.map((order) => (
                 <Link
-                  href="/dashboard/orders"
+                  href={`/dashboard/orders/${order.id}`}
                   key={order.id}
                   className="block rounded-2xl border border-white/10 bg-zinc-900/70 p-4 transition hover:bg-zinc-800"
                 >

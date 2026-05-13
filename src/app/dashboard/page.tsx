@@ -10,13 +10,25 @@ import {
   Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SetupGuide } from "@/components/dashboard/setup-guide";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { getDashboardOverview } from "@/lib/dashboard";
+import { getRestaurantUsage } from "@/lib/usage";
 
 export default async function DashboardPage() {
   const restaurant = await getOrCreateCurrentRestaurant();
 
   const overview = restaurant ? await getDashboardOverview(restaurant.id) : null;
+  const usage = restaurant ? await getRestaurantUsage(restaurant.id) : null;
+  const completedSetupGuide = [
+    overview?.restaurant?.name && overview.restaurant.name !== "My Restaurant"
+      ? "Complete restaurant profile"
+      : "",
+    overview?.stats.menuItems ? "Add menu items" : "",
+    usage?.usage.deliveryZones ? "Add delivery zones" : "",
+    overview?.automations.length ? "Create automations" : "",
+    overview?.restaurant?.whatsappPhoneNumberId ? "Test WhatsApp webhook" : "",
+  ].filter(Boolean) as string[];
 
   const stats = [
     {
@@ -182,6 +194,62 @@ export default async function DashboardPage() {
         </div>
 
         <div className="space-y-4">
+          {usage && (
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+              <h2 className="text-base font-semibold text-white">
+                Plan usage
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Current plan: {usage.plan}
+              </p>
+
+              <div className="mt-5 space-y-3">
+                {[
+                  {
+                    label: "Menu items",
+                    value: usage.usage.menuItems,
+                    limit: usage.limits.menuItems,
+                  },
+                  {
+                    label: "Automations",
+                    value: usage.usage.automations,
+                    limit: usage.limits.automations,
+                  },
+                  {
+                    label: "Delivery zones",
+                    value: usage.usage.deliveryZones,
+                    limit: usage.limits.deliveryZones,
+                  },
+                ].map((item) => {
+                  const percent = Math.min(
+                    (item.value / item.limit) * 100,
+                    100
+                  );
+
+                  return (
+                    <div key={item.label}>
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="text-zinc-400">{item.label}</span>
+                        <span className="text-zinc-300">
+                          {item.value}/{item.limit}
+                        </span>
+                      </div>
+
+                      <div className="h-2 rounded-full bg-zinc-800">
+                        <div
+                          className="h-2 rounded-full bg-emerald-500"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <SetupGuide completed={completedSetupGuide} />
+
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
@@ -345,7 +413,7 @@ export default async function DashboardPage() {
                 overview.orders.map((order) => (
                   <Link
                     key={order.id}
-                    href="/dashboard/orders"
+                    href={`/dashboard/orders/${order.id}`}
                     className="block rounded-2xl border border-white/10 bg-zinc-900/70 p-4 transition hover:bg-zinc-800"
                   >
                     <div className="flex items-center justify-between gap-3">

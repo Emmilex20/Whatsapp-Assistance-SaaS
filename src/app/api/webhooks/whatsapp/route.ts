@@ -7,28 +7,8 @@ import {
 import { buildDeliveryReply, isDeliveryRequest } from "@/lib/delivery-reply";
 import { buildMenuReply, isMenuRequest } from "@/lib/menu-reply";
 import { prisma } from "@/lib/prisma";
-import { sendWhatsAppText } from "@/lib/whatsapp";
+import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 import { handleWhatsAppOrder } from "@/lib/whatsapp-orders";
-
-async function sendWhatsAppTextSafely({
-  to,
-  message,
-  phoneNumberId,
-}: {
-  to: string;
-  message: string;
-  phoneNumberId: string;
-}) {
-  try {
-    await sendWhatsAppText({
-      to,
-      message,
-      phoneNumberId,
-    });
-  } catch (error) {
-    console.warn("WhatsApp send skipped or failed:", error);
-  }
-}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -67,6 +47,12 @@ export async function POST(request: NextRequest) {
     const text = message.text?.body;
     const contactName = value?.contacts?.[0]?.profile?.name;
 
+    console.log("WhatsApp webhook received:", {
+      phoneNumberId,
+      from,
+      hasText: Boolean(text),
+    });
+
     if (!phoneNumberId || !from || !text) {
       return NextResponse.json({ received: true });
     }
@@ -92,7 +78,7 @@ export async function POST(request: NextRequest) {
     if (conversation.status !== "HUMAN_TAKEOVER" && isMenuRequest(text)) {
       const menuReply = await buildMenuReply(restaurant.id);
 
-      await sendWhatsAppTextSafely({
+      await safeSendWhatsAppText({
         to: from,
         message: menuReply,
         phoneNumberId,
@@ -129,7 +115,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (orderResult) {
-        await sendWhatsAppTextSafely({
+        await safeSendWhatsAppText({
           to: from,
           message: orderResult.reply,
           phoneNumberId,
@@ -150,7 +136,7 @@ export async function POST(request: NextRequest) {
         message: text,
       });
 
-      await sendWhatsAppTextSafely({
+      await safeSendWhatsAppText({
         to: from,
         message: deliveryReply,
         phoneNumberId,
@@ -173,7 +159,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (orderResult) {
-      await sendWhatsAppTextSafely({
+      await safeSendWhatsAppText({
         to: from,
         message: orderResult.reply,
         phoneNumberId,
@@ -200,7 +186,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    await sendWhatsAppTextSafely({
+    await safeSendWhatsAppText({
       to: from,
       message: automation.response,
       phoneNumberId,

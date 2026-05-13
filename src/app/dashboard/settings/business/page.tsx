@@ -1,8 +1,6 @@
 import { Building2, Clock, MapPin, Phone } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { BusinessProfileForm } from "@/components/settings/business-profile-form";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
-import { updateRestaurantProfile } from "@/actions/restaurant";
 
 export default async function BusinessSettingsPage() {
   const restaurant = await getOrCreateCurrentRestaurant();
@@ -10,97 +8,34 @@ export default async function BusinessSettingsPage() {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm font-medium text-emerald-400">Business settings</p>
+        <p className="text-sm font-medium text-emerald-400">
+          Business settings
+        </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
           Restaurant profile
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-          This information will help your assistant respond with the correct restaurant details.
+          This information will help your assistant respond with the correct
+          restaurant details.
         </p>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_0.7fr]">
-        <form
-          action={updateRestaurantProfile}
-          className="rounded-3xl border border-white/10 bg-white/3 p-5"
-        >
-          <h2 className="text-base font-semibold text-white">Basic information</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Add your restaurant name, WhatsApp number, and location.
-          </p>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Restaurant name</label>
-              <Input
-                name="name"
-                defaultValue={restaurant?.name || ""}
-                placeholder="Mama T’s Kitchen"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">WhatsApp number</label>
-              <Input
-                name="whatsappNumber"
-                defaultValue={restaurant?.whatsappNumber || ""}
-                placeholder="+234 801 234 5678"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">WhatsApp Phone Number ID</label>
-              <Input
-                name="whatsappPhoneNumberId"
-                defaultValue={restaurant?.whatsappPhoneNumberId || ""}
-                placeholder="123456789012345"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-              <p className="text-xs leading-5 text-zinc-500">
-                This comes from your Meta WhatsApp Cloud API setup.
-              </p>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm text-zinc-300">Restaurant address</label>
-              <Input
-                name="address"
-                defaultValue={restaurant?.address || ""}
-                placeholder="Kubwa, Abuja, Nigeria"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Opening time</label>
-              <Input
-                name="openingTime"
-                defaultValue={restaurant?.openingTime || ""}
-                placeholder="9:00 AM"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Closing time</label>
-              <Input
-                name="closingTime"
-                defaultValue={restaurant?.closingTime || ""}
-                placeholder="9:00 PM"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-          </div>
-
-          <Button className="mt-6 h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
-            Save business profile
-          </Button>
-        </form>
+        <BusinessProfileForm
+          restaurant={{
+            name: restaurant?.name || "",
+            whatsappNumber: restaurant?.whatsappNumber || "",
+            whatsappPhoneNumberId: restaurant?.whatsappPhoneNumberId || "",
+            address: restaurant?.address || "",
+            openingTime: restaurant?.openingTime || "",
+            closingTime: restaurant?.closingTime || "",
+          }}
+        />
 
         <div className="rounded-3xl border border-white/10 bg-white/3 p-5">
-          <h2 className="text-base font-semibold text-white">Assistant preview</h2>
+          <h2 className="text-base font-semibold text-white">
+            Assistant preview
+          </h2>
           <p className="mt-1 text-sm text-zinc-500">
             How your assistant may answer customers.
           </p>
@@ -139,7 +74,9 @@ export default async function BusinessSettingsPage() {
                   <item.icon size={17} className="text-emerald-400" />
                   <p className="text-sm font-medium text-white">{item.title}</p>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-zinc-400">{item.text}</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  {item.text}
+                </p>
               </div>
             ))}
           </div>

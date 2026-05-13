@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Clock, MapPin, Plus, ShoppingBag, UserRound } from "lucide-react";
+import { Clock, Eye, MapPin, Plus, ShoppingBag, UserRound } from "lucide-react";
 import type { OrderStatus } from "@/generated/prisma/client";
 import { confirmOrder, updateOrderStatus } from "@/actions/orders";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { getOrderNextAction } from "@/lib/order-workflow";
@@ -87,26 +88,13 @@ export default async function OrdersPage() {
       </section>
 
       {orders.length === 0 ? (
-        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
-            <ShoppingBag size={22} />
-          </div>
-
-          <h2 className="mt-5 text-base font-semibold text-white">
-            No orders yet
-          </h2>
-
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-400">
-            Orders will appear here after WhatsApp order collection is connected
-            or when you create one manually.
-          </p>
-
-          <Link href="/dashboard/orders/new">
-            <Button className="mt-5 h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
-              Create first order
-            </Button>
-          </Link>
-        </section>
+        <EmptyState
+          icon={ShoppingBag}
+          title="No orders yet"
+          description="Orders will appear here after WhatsApp order collection is connected or when you create one manually."
+          action="Create first order"
+          href="/dashboard/orders/new"
+        />
       ) : (
         <section className="grid gap-4">
           {orders.map((order) => {
@@ -222,6 +210,17 @@ export default async function OrdersPage() {
                   </div>
 
                   <div className="min-w-52 rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
+                    <Link href={`/dashboard/orders/${order.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mb-3 h-9 w-full rounded-full border-white/10 bg-white/[0.03] text-xs text-white hover:bg-white/10"
+                      >
+                        <Eye className="mr-1.5" size={14} />
+                        View details
+                      </Button>
+                    </Link>
+
                     <p className="text-sm text-zinc-500">Order total</p>
                     <h3 className="mt-1 text-2xl font-semibold text-white">
                       ₦{order.totalAmount.toLocaleString()}

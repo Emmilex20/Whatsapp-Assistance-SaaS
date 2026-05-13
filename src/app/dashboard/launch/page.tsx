@@ -1,4 +1,5 @@
-import { CheckCircle2, Rocket, CircleDot } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CheckCircle2, CircleDot, Rocket } from "lucide-react";
 import { launchChecklist } from "@/lib/site";
 
 export default function LaunchPage() {
@@ -24,6 +25,27 @@ export default function LaunchPage() {
           This page tracks what is ready and what still needs to be connected
           before onboarding restaurants publicly.
         </p>
+      </section>
+
+      <section className="rounded-3xl border border-blue-400/20 bg-blue-400/10 p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-white">
+              Production deployment checklist
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-blue-100">
+              Check environment variables and deployment steps before
+              onboarding real restaurants.
+            </p>
+          </div>
+
+          <Link href="/dashboard/launch/production">
+            <button className="inline-flex h-10 items-center rounded-full bg-white px-5 text-sm font-medium text-zinc-950 hover:bg-zinc-200">
+              Open checklist
+              <ArrowRight className="ml-2" size={16} />
+            </button>
+          </Link>
+        </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1fr_0.75fr]">

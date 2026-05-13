@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Edit3, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createMenuItem, deleteMenuItem } from "@/actions/restaurant";
+import { deleteMenuItem } from "@/actions/restaurant";
+import { EmptyState } from "@/components/shared/empty-state";
+import { CreateMenuItemForm } from "@/components/menu/create-menu-item-form";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 
@@ -36,51 +38,7 @@ export default async function MenuPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.75fr_1.25fr]">
-        <form
-          action={createMenuItem}
-          className="rounded-3xl border border-white/10 bg-white/3 p-5"
-        >
-          <h2 className="text-base font-semibold text-white">Add new item</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Saved items will later be used by WhatsApp automations.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Food name</label>
-              <Input
-                name="name"
-                required
-                placeholder="Jollof Rice & Chicken"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Category</label>
-              <Input
-                name="category"
-                placeholder="Rice"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Price in naira</label>
-              <Input
-                name="price"
-                required
-                type="number"
-                placeholder="3500"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <Button className="h-10 w-full rounded-full bg-white text-sm text-zinc-950 hover:bg-zinc-200">
-              Save item
-            </Button>
-          </div>
-        </form>
+        <CreateMenuItemForm />
 
         <div className="rounded-3xl border border-white/10 bg-white/3 p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -105,9 +63,12 @@ export default async function MenuPage() {
 
           <div className="mt-5 space-y-3">
             {menuItems.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5 text-sm text-zinc-400">
-                No menu items yet. Add your first food item.
-              </div>
+              <EmptyState
+                icon={Plus}
+                title="No menu items yet"
+                description="Add your first food item so customers can request your real menu through WhatsApp."
+                action="Use form to add item"
+              />
             ) : (
               menuItems.map((item) => (
                 <div

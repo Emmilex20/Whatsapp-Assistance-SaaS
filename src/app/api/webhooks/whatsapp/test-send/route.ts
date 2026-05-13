@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendWhatsAppText } from "@/lib/whatsapp";
+import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await sendWhatsAppText({
+    const result = await safeSendWhatsAppText({
       to: body.to,
       message: body.message,
     });

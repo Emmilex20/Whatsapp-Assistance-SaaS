@@ -65,6 +65,15 @@ export default function WhatsAppSettingsPage() {
               </p>
             </div>
 
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+              <p className="text-sm leading-6 text-emerald-100">
+                WhatsApp sending is controlled by{" "}
+                <span className="font-semibold">WHATSAPP_SEND_ENABLED</span>.
+                Keep it false while testing. Set it to true only when you are
+                ready to send real customer messages.
+              </p>
+            </div>
+
             <Button className="h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
               Save WhatsApp setup
             </Button>
@@ -114,6 +123,35 @@ export default function WhatsAppSettingsPage() {
             Open Meta dashboard
             <ExternalLink className="ml-2" size={15} />
           </Button>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="text-base font-semibold text-white">
+          Local testing checklist
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-zinc-400">
+          Before connecting real WhatsApp, test your webhook locally with mock
+          messages.
+        </p>
+
+        <div className="mt-5 space-y-3">
+          {[
+            "Add your WhatsApp Phone Number ID in Business Settings.",
+            "Create at least one automation rule.",
+            "Add menu items and delivery zones.",
+            "Keep WHATSAPP_SEND_ENABLED=false while testing.",
+            "Send a mock POST request to /api/webhooks/whatsapp.",
+            "Check Inbox, Orders, Customers, and Analytics after the test.",
+          ].map((item) => (
+            <div
+              key={item}
+              className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4 text-sm text-zinc-300"
+            >
+              {item}
+            </div>
+          ))}
         </div>
       </section>
     </div>

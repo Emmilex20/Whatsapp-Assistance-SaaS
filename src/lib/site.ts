@@ -417,6 +417,36 @@ export const whatsappSetupSteps = [
   },
 ];
 
+export const firstTimeSetupGuide = [
+  {
+    title: "Complete restaurant profile",
+    description:
+      "Add restaurant name, WhatsApp number, location, and opening hours.",
+    href: "/dashboard/settings/business",
+  },
+  {
+    title: "Add menu items",
+    description: "Add foods, prices, and categories customers can request.",
+    href: "/dashboard/menu",
+  },
+  {
+    title: "Add delivery zones",
+    description: "Set delivery areas, fees, and estimated delivery time.",
+    href: "/dashboard/settings/delivery",
+  },
+  {
+    title: "Create automations",
+    description:
+      "Create replies for menu, delivery, order, and opening hours.",
+    href: "/dashboard/automations",
+  },
+  {
+    title: "Test WhatsApp webhook",
+    description: "Send a mock webhook message before going live.",
+    href: "/dashboard/settings/whatsapp",
+  },
+];
+
 export const billingPlans = [
   {
     id: "starter",

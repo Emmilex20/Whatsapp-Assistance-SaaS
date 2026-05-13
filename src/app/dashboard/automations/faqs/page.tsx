@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Edit3, Plus, Trash2 } from "lucide-react";
+import { deleteFAQ } from "@/actions/restaurant";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { createFAQ, deleteFAQ } from "@/actions/restaurant";
-import { prisma } from "@/lib/prisma";
+import { CreateFAQForm } from "@/components/faqs/create-faq-form";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { prisma } from "@/lib/prisma";
 
 export default async function FaqsPage() {
   const restaurant = await getOrCreateCurrentRestaurant();
@@ -20,12 +20,15 @@ export default async function FaqsPage() {
     <div className="space-y-6">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-medium text-emerald-400">FAQ automation</p>
+          <p className="text-sm font-medium text-emerald-400">
+            FAQ automation
+          </p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
             Common customer questions
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-            Add answers your assistant can use when customers ask about delivery, location, payment, or opening hours.
+            Add answers your assistant can use when customers ask about
+            delivery, location, payment, or opening hours.
           </p>
         </div>
 
@@ -36,41 +39,7 @@ export default async function FaqsPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.75fr_1.25fr]">
-        <form
-          action={createFAQ}
-          className="rounded-3xl border border-white/10 bg-white/3 p-5"
-        >
-          <h2 className="text-base font-semibold text-white">New FAQ</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            These answers will later connect to automation rules.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Question</label>
-              <Input
-                name="question"
-                required
-                placeholder="Do you deliver?"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Answer</label>
-              <Input
-                name="answer"
-                required
-                placeholder="Yes, we deliver within selected areas."
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <Button className="h-10 w-full rounded-full bg-white text-sm text-zinc-950 hover:bg-zinc-200">
-              Save FAQ
-            </Button>
-          </div>
-        </form>
+        <CreateFAQForm />
 
         <div className="rounded-3xl border border-white/10 bg-white/3 p-5">
           <h2 className="text-base font-semibold text-white">Saved FAQs</h2>

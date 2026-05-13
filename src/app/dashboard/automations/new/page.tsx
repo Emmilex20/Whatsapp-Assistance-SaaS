@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Bot, MessageSquareText, Workflow } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { createAutomation } from "@/actions/restaurant";
+import { CreateAutomationForm } from "@/components/automations/create-automation-form";
 
 export default function NewAutomationPage() {
   return (
@@ -29,58 +27,7 @@ export default function NewAutomationPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-        <form
-          action={createAutomation}
-          className="rounded-3xl border border-white/10 bg-white/3 p-5"
-        >
-          <h2 className="text-base font-semibold text-white">
-            Automation details
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Keep the trigger simple so customers can activate it easily.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Automation name</label>
-              <Input
-                name="name"
-                required
-                placeholder="Menu request"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">
-                Customer trigger keywords
-              </label>
-              <Input
-                name="triggers"
-                required
-                placeholder="menu, food, price"
-                className="h-11 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white placeholder:text-zinc-600"
-              />
-              <p className="text-xs leading-5 text-zinc-500">
-                Separate keywords with commas. Example: menu, food, price list.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-300">Assistant reply</label>
-              <textarea
-                name="response"
-                required
-                placeholder="Sure 😊 Here is today’s menu with prices..."
-                className="min-h-32 w-full resize-none rounded-2xl border border-white/10 bg-zinc-900 px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-emerald-400/50"
-              />
-            </div>
-
-            <Button className="h-10 w-full rounded-full bg-emerald-500 text-sm text-white hover:bg-emerald-400">
-              Save automation
-            </Button>
-          </div>
-        </form>
+        <CreateAutomationForm />
 
         <div className="space-y-4">
           <div className="rounded-3xl border border-white/10 bg-white/3 p-5">
@@ -102,7 +49,7 @@ export default function NewAutomationPage() {
                       Customer sends message
                     </p>
                     <p className="text-xs text-zinc-500">
-                      Example: “Please send menu”
+                      Example: Please send menu
                     </p>
                   </div>
                 </div>

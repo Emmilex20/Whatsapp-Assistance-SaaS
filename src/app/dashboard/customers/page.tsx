@@ -6,6 +6,7 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/empty-state";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { getRestaurantCustomers } from "@/lib/customers";
 
@@ -55,19 +56,13 @@ export default async function CustomersPage() {
       </section>
 
       {customers.length === 0 ? (
-        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
-            <UserRound size={22} />
-          </div>
-
-          <h2 className="mt-5 text-base font-semibold text-white">
-            No customers yet
-          </h2>
-
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-400">
-            Customers will appear here after WhatsApp conversations are saved.
-          </p>
-        </section>
+        <EmptyState
+          icon={UserRound}
+          title="No customers yet"
+          description="Customers will appear here after WhatsApp conversations are saved. You can test this using the WhatsApp mock webhook."
+          action="Open WhatsApp setup"
+          href="/dashboard/settings/whatsapp"
+        />
       ) : (
         <section className="grid gap-4">
           {customers.map((customer) => (

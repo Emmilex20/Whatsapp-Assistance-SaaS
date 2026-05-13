@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import type { OrderStatus } from "@/generated/prisma/client";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { findMatchingDeliveryZone } from "@/lib/delivery-fee";
+import { getOrderStatusMessage } from "@/lib/order-status-message";
 import { prisma } from "@/lib/prisma";
+import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 
 const ORDER_STATUSES: OrderStatus[] = [
   "NEW",
@@ -20,7 +21,7 @@ export async function createManualOrder(formData: FormData) {
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
-    throw new Error("Restaurant not found.");
+    return { error: "Restaurant not found." };
   }
 
   const customerName = String(formData.get("customerName") || "");
@@ -31,12 +32,16 @@ export async function createManualOrder(formData: FormData) {
   const deliveryAddress = String(formData.get("deliveryAddress") || "");
   const notes = String(formData.get("notes") || "");
 
-  if (!customerPhone || !itemName) {
-    throw new Error("Customer phone and item name are required.");
+  if (!customerPhone) {
+    return { error: "Customer phone is required." };
   }
 
-  const safeQuantity = Number.isNaN(quantity) || quantity < 1 ? 1 : quantity;
-  const safePrice = Number.isNaN(price) || price < 0 ? 0 : price;
+  if (!itemName) {
+    return { error: "Item name is required." };
+  }
+
+  const safeQuantity = Number.isNaN(quantity) ? 1 : quantity;
+  const safePrice = Number.isNaN(price) ? 0 : price;
   const itemsSubtotal = safeQuantity * safePrice;
 
   const matchedZone = deliveryAddress
@@ -70,7 +75,8 @@ export async function createManualOrder(formData: FormData) {
   });
 
   revalidatePath("/dashboard/orders");
-  redirect("/dashboard/orders");
+
+  return { success: "Order created successfully." };
 }
 
 export async function updateOrderStatus(formData: FormData) {
@@ -87,17 +93,55 @@ export async function updateOrderStatus(formData: FormData) {
     throw new Error("Order ID and status are required.");
   }
 
-  await prisma.order.update({
+  const order = await prisma.order.findFirst({
     where: {
       id: orderId,
       restaurantId: restaurant.id,
+    },
+  });
+
+  if (!order) {
+    throw new Error("Order not found.");
+  }
+
+  const updatedOrder = await prisma.order.update({
+    where: {
+      id: order.id,
     },
     data: {
       status,
     },
   });
 
+  const message = getOrderStatusMessage({
+    status,
+    restaurantName: restaurant.name,
+    orderCode: updatedOrder.id.slice(-6).toUpperCase(),
+  });
+
+  if (order.conversationId) {
+    await prisma.message.create({
+      data: {
+        conversationId: order.conversationId,
+        senderType: "HUMAN",
+        content: message,
+      },
+    });
+  }
+
+  await safeSendWhatsAppText({
+    to: order.customerPhone,
+    message,
+  });
+
   revalidatePath("/dashboard/orders");
+  revalidatePath(`/dashboard/orders/${order.id}`);
+  revalidatePath("/dashboard/inbox");
+  revalidatePath("/dashboard/customers");
+
+  if (order.conversationId) {
+    revalidatePath(`/dashboard/customers/${order.conversationId}`);
+  }
 }
 
 export async function confirmOrder(formData: FormData) {
@@ -120,7 +164,7 @@ export async function confirmOrder(formData: FormData) {
     throw new Error("Order not found.");
   }
 
-  await prisma.order.update({
+  const updatedOrder = await prisma.order.update({
     where: {
       id: order.id,
     },
@@ -129,5 +173,33 @@ export async function confirmOrder(formData: FormData) {
     },
   });
 
+  const message = getOrderStatusMessage({
+    status: "CONFIRMED",
+    restaurantName: restaurant.name,
+    orderCode: updatedOrder.id.slice(-6).toUpperCase(),
+  });
+
+  if (order.conversationId) {
+    await prisma.message.create({
+      data: {
+        conversationId: order.conversationId,
+        senderType: "HUMAN",
+        content: message,
+      },
+    });
+  }
+
+  await safeSendWhatsAppText({
+    to: order.customerPhone,
+    message,
+  });
+
   revalidatePath("/dashboard/orders");
+  revalidatePath(`/dashboard/orders/${order.id}`);
+  revalidatePath("/dashboard/inbox");
+  revalidatePath("/dashboard/customers");
+
+  if (order.conversationId) {
+    revalidatePath(`/dashboard/customers/${order.conversationId}`);
+  }
 }

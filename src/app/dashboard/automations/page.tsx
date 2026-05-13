@@ -10,6 +10,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   deleteAutomation,
   toggleAutomationStatus,
@@ -104,9 +105,13 @@ export default async function AutomationsPage() {
 
           <div className="space-y-3">
             {automations.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5 text-sm text-zinc-400">
-                No automation rules yet. Create your first rule for menu, delivery, or order replies.
-              </div>
+              <EmptyState
+                icon={Workflow}
+                title="No automation rules yet"
+                description="Create your first rule for menu, delivery, order, or opening hours so the assistant can reply automatically."
+                action="Create automation"
+                href="/dashboard/automations/new"
+              />
             ) : (
               automations.map((rule) => (
                 <div

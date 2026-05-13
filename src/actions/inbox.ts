@@ -3,27 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
-import { sendWhatsAppText } from "@/lib/whatsapp";
-
-async function sendWhatsAppTextSafely({
-  to,
-  message,
-  phoneNumberId,
-}: {
-  to: string;
-  message: string;
-  phoneNumberId?: string;
-}) {
-  try {
-    await sendWhatsAppText({
-      to,
-      message,
-      phoneNumberId,
-    });
-  } catch (error) {
-    console.warn("WhatsApp manual reply send skipped or failed:", error);
-  }
-}
+import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 
 async function getConversationForCurrentRestaurant(conversationId: string) {
   const restaurant = await getOrCreateCurrentRestaurant();
@@ -105,7 +85,7 @@ export async function sendHumanReply(formData: FormData) {
     },
   });
 
-  await sendWhatsAppTextSafely({
+  await safeSendWhatsAppText({
     to: conversation.customerPhone,
     message,
     phoneNumberId: restaurant.whatsappPhoneNumberId || undefined,

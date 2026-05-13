@@ -188,3 +188,13 @@ model DeliveryZone {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  provider  String
+  eventType String
+  reference String?  @unique
+  payload   Json
+  processed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
