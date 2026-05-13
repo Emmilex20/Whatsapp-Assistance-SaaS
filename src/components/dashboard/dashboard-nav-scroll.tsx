@@ -22,7 +22,11 @@ export function DashboardNavScroll({ onNavigate }: DashboardNavScrollProps) {
     if (!element) return;
 
     function updateThumb() {
-      const { scrollTop, scrollHeight, clientHeight } = element;
+      const currentElement = scrollRef.current;
+
+      if (!currentElement) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = currentElement;
       const canScroll = scrollHeight > clientHeight + 1;
       const trackPadding = 24;
       const trackHeight = Math.max(clientHeight - trackPadding * 2, 1);
