@@ -2,19 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { dashboardLinks } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
 type DashboardNavScrollProps = {
   onNavigate?: () => void;
 };
 
 export function DashboardNavScroll({ onNavigate }: DashboardNavScrollProps) {
+  const pathname = usePathname();
   const scrollRef = useRef<HTMLElement>(null);
   const [thumb, setThumb] = useState({
     height: 64,
     top: 24,
     visible: false,
   });
+
+  const activeHref =
+    dashboardLinks
+      .filter((item) => {
+        if (item.href === "/dashboard") {
+          return pathname === item.href;
+        }
+
+        return pathname === item.href || pathname.startsWith(`${item.href}/`);
+      })
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href || "";
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -82,17 +96,53 @@ export function DashboardNavScroll({ onNavigate }: DashboardNavScrollProps) {
         ref={scrollRef}
         className="dashboard-nav-scroll h-full space-y-1 overflow-y-auto p-2 pr-5"
       >
-        {dashboardLinks.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            onClick={onNavigate}
-            className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-white/6 hover:text-white"
-          >
-            <item.icon size={18} />
-            {item.label}
-          </Link>
-        ))}
+        {dashboardLinks.map((item) => {
+          const active = activeHref === item.href;
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "group relative flex items-center gap-3 overflow-hidden rounded-2xl border px-3 py-2.5 text-sm transition duration-200",
+                active
+                  ? "border-emerald-400/25 bg-[linear-gradient(90deg,rgba(16,185,129,0.24),rgba(16,185,129,0.10),rgba(255,255,255,0.035))] text-white shadow-[0_0_24px_rgba(16,185,129,0.14)]"
+                  : "border-transparent text-zinc-400 hover:border-white/5 hover:bg-white/6 hover:text-white"
+              )}
+            >
+              {active && (
+                <>
+                  <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-gradient-to-b from-emerald-300 to-teal-400 shadow-[0_0_14px_rgba(16,185,129,0.8)]" />
+                  <span className="absolute inset-0 bg-emerald-400/5" />
+                </>
+              )}
+
+              <span
+                className={cn(
+                  "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-xl transition",
+                  active
+                    ? "bg-emerald-400/12 text-emerald-200"
+                    : "text-zinc-400 group-hover:text-white"
+                )}
+              >
+                <item.icon size={18} />
+              </span>
+
+              <span
+                className={cn(
+                  "relative min-w-0 truncate transition",
+                  active
+                    ? "font-semibold text-white"
+                    : "font-medium text-zinc-400 group-hover:text-white"
+                )}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );
