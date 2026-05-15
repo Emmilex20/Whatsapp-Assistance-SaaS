@@ -14,7 +14,14 @@ type EditCampaignPostFormProps = {
     platform: string;
     scheduledAt: Date;
     notes: string | null;
+    socialAccountId?: string | null;
+    autoPostEnabled?: boolean;
   };
+  socialAccounts?: {
+    id: string;
+    displayName: string;
+    paused: boolean;
+  }[];
 };
 
 const initialState = { success: "", error: "" };
@@ -26,7 +33,10 @@ function toDateTimeLocal(date: Date) {
   return localDate.toISOString().slice(0, 16);
 }
 
-export function EditCampaignPostForm({ post }: EditCampaignPostFormProps) {
+export function EditCampaignPostForm({
+  post,
+  socialAccounts = [],
+}: EditCampaignPostFormProps) {
   const [open, setOpen] = useState(false);
 
   const [state, formAction, pending] = useActionState(
@@ -87,6 +97,7 @@ export function EditCampaignPostForm({ post }: EditCampaignPostFormProps) {
           <option>WhatsApp Status</option>
           <option>Instagram</option>
           <option>Facebook</option>
+          <option>X / Twitter</option>
           <option>TikTok</option>
           <option>Other</option>
         </select>
@@ -99,6 +110,20 @@ export function EditCampaignPostForm({ post }: EditCampaignPostFormProps) {
           className="h-10 rounded-2xl border-white/10 bg-zinc-900 text-sm text-white"
         />
 
+        <select
+          name="socialAccountId"
+          defaultValue={post.socialAccountId || ""}
+          className="h-10 rounded-2xl border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none"
+        >
+          <option value="">Manual posting only</option>
+          {socialAccounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.displayName}
+              {account.paused ? " (paused)" : ""}
+            </option>
+          ))}
+        </select>
+
         <textarea
           name="notes"
           defaultValue={post.notes || ""}
@@ -106,6 +131,17 @@ export function EditCampaignPostForm({ post }: EditCampaignPostFormProps) {
           className="min-h-20 rounded-2xl border border-white/10 bg-zinc-900 px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600"
         />
       </div>
+
+      <label className="mt-3 flex items-start gap-3 rounded-2xl border border-white/10 bg-zinc-900/70 p-3 text-xs leading-5 text-zinc-300">
+        <input
+          name="autoPostEnabled"
+          type="checkbox"
+          defaultChecked={Boolean(post.autoPostEnabled)}
+          className="mt-0.5 h-4 w-4 accent-emerald-500"
+          disabled={socialAccounts.length === 0}
+        />
+        Auto-post this item when the schedule time arrives.
+      </label>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Button

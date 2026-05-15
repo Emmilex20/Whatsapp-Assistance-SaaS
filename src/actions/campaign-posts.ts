@@ -35,6 +35,30 @@ async function getAssignableTeamMemberId({
   return teamMember?.id || null;
 }
 
+async function getAutoPostSocialAccountId({
+  restaurantId,
+  socialAccountId,
+}: {
+  restaurantId: string;
+  socialAccountId: string;
+}) {
+  if (!socialAccountId) {
+    return null;
+  }
+
+  const socialAccount = await prisma.socialAccount.findFirst({
+    where: {
+      id: socialAccountId,
+      restaurantId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return socialAccount?.id || null;
+}
+
 export async function createCampaignPost(formData: FormData) {
   const allowed = await checkPermission("manage_campaigns");
 
@@ -55,6 +79,8 @@ export async function createCampaignPost(formData: FormData) {
   const assignedTeamMemberId = String(
     formData.get("assignedTeamMemberId") || ""
   );
+  const socialAccountId = String(formData.get("socialAccountId") || "");
+  const autoPostEnabled = formData.get("autoPostEnabled") === "on";
   const notes = String(formData.get("notes") || "").trim();
 
   if (!campaignId) {
@@ -94,14 +120,22 @@ export async function createCampaignPost(formData: FormData) {
     restaurantId: restaurant.id,
     assignedTeamMemberId,
   });
+  const publishSocialAccountId = await getAutoPostSocialAccountId({
+    restaurantId: restaurant.id,
+    socialAccountId,
+  });
 
   await prisma.campaignPost.create({
     data: {
       campaignId: campaign.id,
       assignedTeamMemberId: assignableTeamMemberId,
+      socialAccountId: publishSocialAccountId,
       title,
       platform,
       scheduledAt,
+      autoPostEnabled: autoPostEnabled && Boolean(publishSocialAccountId),
+      autoPostStatus:
+        autoPostEnabled && publishSocialAccountId ? "SCHEDULED" : "MANUAL",
       notes: notes || null,
     },
   });
@@ -181,6 +215,8 @@ export async function updateCampaignPost(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   const platform = String(formData.get("platform") || "").trim();
   const scheduledAtValue = String(formData.get("scheduledAt") || "");
+  const socialAccountId = String(formData.get("socialAccountId") || "");
+  const autoPostEnabled = formData.get("autoPostEnabled") === "on";
   const notes = String(formData.get("notes") || "").trim();
 
   if (!title) {
@@ -214,12 +250,26 @@ export async function updateCampaignPost(formData: FormData) {
     return { error: "Post not found." };
   }
 
+  const publishSocialAccountId = await getAutoPostSocialAccountId({
+    restaurantId: restaurant.id,
+    socialAccountId,
+  });
+
   await prisma.campaignPost.update({
     where: { id: post.id },
     data: {
       title,
       platform,
       scheduledAt,
+      socialAccountId: publishSocialAccountId,
+      autoPostEnabled: autoPostEnabled && Boolean(publishSocialAccountId),
+      autoPostStatus:
+        autoPostEnabled && publishSocialAccountId && !post.posted
+          ? "SCHEDULED"
+          : post.posted
+            ? post.autoPostStatus
+            : "MANUAL",
+      autoPostError: null,
       notes: notes || null,
     },
   });
@@ -319,4 +369,57 @@ export async function assignCampaignPost(formData: FormData) {
   revalidatePath("/dashboard/team");
 
   return { success: "Campaign post assignment updated." };
+}
+
+export async function toggleCampaignPostAutoPosting(formData: FormData) {
+  const allowed = await checkPermission("manage_campaigns");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage campaigns." };
+  }
+
+  const restaurant = await getOrCreateCurrentRestaurant();
+
+  if (!restaurant) {
+    return { error: "Restaurant not found." };
+  }
+
+  const id = String(formData.get("id") || "");
+
+  const post = await prisma.campaignPost.findFirst({
+    where: {
+      id,
+      campaign: {
+        restaurantId: restaurant.id,
+      },
+    },
+  });
+
+  if (!post) {
+    return { error: "Post not found." };
+  }
+
+  if (!post.autoPostEnabled || !post.socialAccountId) {
+    return { error: "Auto-posting is not enabled for this post." };
+  }
+
+  await prisma.campaignPost.update({
+    where: {
+      id: post.id,
+    },
+    data: {
+      autoPostPaused: !post.autoPostPaused,
+      autoPostStatus: post.autoPostPaused ? "SCHEDULED" : "PAUSED",
+    },
+  });
+
+  revalidatePath("/dashboard/campaigns");
+  revalidatePath("/dashboard/campaigns/calendar");
+  revalidatePath(`/dashboard/campaigns/${post.campaignId}`);
+
+  return {
+    success: post.autoPostPaused
+      ? "Scheduled auto-post resumed."
+      : "Scheduled auto-post paused.",
+  };
 }

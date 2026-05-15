@@ -135,6 +135,7 @@ model Restaurant {
   mediaGenerations MediaGeneration[]
   promoCampaigns PromoCampaign[]
   reportArchives ReportArchive[]
+  socialAccounts SocialAccount[]
 }
 
 model MenuItem {
@@ -377,10 +378,18 @@ model CampaignPost {
   id          String   @id @default(cuid())
   campaignId  String
   assignedTeamMemberId String?
+  socialAccountId String?
   title       String
   platform    String
   scheduledAt DateTime
   posted      Boolean  @default(false)
+  autoPostEnabled Boolean @default(false)
+  autoPostPaused Boolean @default(false)
+  autoPostStatus String @default("MANUAL")
+  autoPostAttempts Int @default(0)
+  autoPostError String?
+  autoPostedAt DateTime?
+  socialPostUrl String?
   completionNotes String?
   postedAt    DateTime?
   notes       String?
@@ -389,6 +398,26 @@ model CampaignPost {
 
   campaign PromoCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   assignedTeamMember TeamMember? @relation("CampaignPostAssignments", fields: [assignedTeamMemberId], references: [id], onDelete: SetNull)
+  socialAccount SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
+}
+
+model SocialAccount {
+  id          String   @id @default(cuid())
+  restaurantId String
+  provider    String
+  displayName String
+  accountHandle String?
+  permissions String[] @default([])
+  postingEnabled Boolean @default(false)
+  paused Boolean @default(false)
+  status String @default("CONNECTED")
+  connectionNote String?
+  lastConnectedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  campaignPosts CampaignPost[]
 }
 
 model ReportArchive {

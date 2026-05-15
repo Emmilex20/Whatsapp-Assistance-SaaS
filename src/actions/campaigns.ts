@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { PromoCampaignStatus } from "@/generated/prisma/client";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { campaignPromptPresets } from "@/lib/campaign-prompt-presets";
 import { prisma } from "@/lib/prisma";
 import { checkPermission } from "@/lib/require-permission";
 
@@ -53,6 +54,59 @@ export async function createPromoCampaign(formData: FormData) {
   revalidatePath("/dashboard/campaigns");
 
   return { success: "Campaign created successfully." };
+}
+
+export async function createRecommendedPromoCampaigns() {
+  const allowed = await checkPermission("manage_campaigns");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage campaigns." };
+  }
+
+  const restaurant = await getOrCreateCurrentRestaurant();
+
+  if (!restaurant) {
+    return { error: "Restaurant not found." };
+  }
+
+  const existingCampaigns = await prisma.promoCampaign.findMany({
+    where: {
+      restaurantId: restaurant.id,
+    },
+    select: {
+      title: true,
+    },
+  });
+
+  const existingTitles = new Set(
+    existingCampaigns.map((campaign) => campaign.title.toLowerCase())
+  );
+
+  const campaignsToCreate = campaignPromptPresets.filter(
+    (campaign) => !existingTitles.has(campaign.title.toLowerCase())
+  );
+
+  if (campaignsToCreate.length === 0) {
+    return { success: "Recommended campaign prompts are already added." };
+  }
+
+  await prisma.promoCampaign.createMany({
+    data: campaignsToCreate.map((campaign) => ({
+      restaurantId: restaurant.id,
+      title: campaign.title,
+      goal: campaign.goal,
+      description: campaign.description,
+      status: "DRAFT",
+    })),
+  });
+
+  revalidatePath("/dashboard/campaigns");
+
+  return {
+    success: `${campaignsToCreate.length} recommended campaign prompt${
+      campaignsToCreate.length === 1 ? "" : "s"
+    } added.`,
+  };
 }
 
 export async function updatePromoCampaignStatus(formData: FormData) {

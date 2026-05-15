@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, Megaphone } from "lucide-react";
 import { updatePromoCampaignStatus } from "@/actions/campaigns";
 import { CreateCampaignForm } from "@/components/campaigns/create-campaign-form";
+import { CreateRecommendedCampaignsButton } from "@/components/campaigns/create-recommended-campaigns-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { PromoCampaignStatus } from "@/generated/prisma/client";
@@ -62,12 +63,15 @@ export default async function CampaignsPage() {
           </p>
         </div>
 
-        <Link
-          href="/dashboard/campaigns/calendar"
-          className="inline-flex h-10 items-center rounded-full bg-emerald-500 px-5 text-sm font-medium text-white hover:bg-emerald-400"
-        >
-          Posting calendar
-        </Link>
+        <div className="action-row">
+          <CreateRecommendedCampaignsButton />
+          <Link
+            href="/dashboard/campaigns/calendar"
+            className="inline-flex h-10 shrink-0 items-center rounded-full bg-emerald-500 px-5 text-sm font-medium text-white hover:bg-emerald-400"
+          >
+            Posting calendar
+          </Link>
+        </div>
       </section>
 
       {reminders && (

@@ -1,3 +1,9 @@
 {
-  "buildCommand": "pnpm run vercel-build"
+  "buildCommand": "pnpm run vercel-build",
+  "crons": [
+    {
+      "path": "/api/social-posts/process",
+      "schedule": "*/10 * * * *"
+    }
+  ]
 }

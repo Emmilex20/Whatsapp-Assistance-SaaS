@@ -17,6 +17,13 @@ type CreateCampaignPostFormProps = {
     name: string | null;
     email: string;
   }[];
+  socialAccounts: {
+    id: string;
+    displayName: string;
+    provider: string;
+    postingEnabled: boolean;
+    paused: boolean;
+  }[];
 };
 
 const initialState = { success: "", error: "" };
@@ -24,6 +31,7 @@ const initialState = { success: "", error: "" };
 export function CreateCampaignPostForm({
   campaigns,
   teamMembers,
+  socialAccounts,
 }: CreateCampaignPostFormProps) {
   const [state, formAction, pending] = useActionState(
     async (_prev: typeof initialState, formData: FormData) => {
@@ -92,6 +100,7 @@ export function CreateCampaignPostForm({
           <option>WhatsApp Status</option>
           <option>Instagram</option>
           <option>Facebook</option>
+          <option>X / Twitter</option>
           <option>TikTok</option>
           <option>Other</option>
         </select>
@@ -115,6 +124,31 @@ export function CreateCampaignPostForm({
             </option>
           ))}
         </select>
+
+        <select
+          name="socialAccountId"
+          defaultValue=""
+          className="h-11 w-full rounded-2xl border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none"
+        >
+          <option value="">Manual posting only</option>
+          {socialAccounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.displayName}
+              {account.paused ? " (paused)" : ""}
+            </option>
+          ))}
+        </select>
+
+        <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-zinc-900/70 p-4 text-sm leading-6 text-zinc-300">
+          <input
+            name="autoPostEnabled"
+            type="checkbox"
+            className="mt-1 h-4 w-4 accent-emerald-500"
+            disabled={socialAccounts.length === 0}
+          />
+          Auto-post this scheduled item when the selected channel is connected
+          and publishing is enabled.
+        </label>
 
         <textarea
           name="notes"

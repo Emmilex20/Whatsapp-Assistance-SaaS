@@ -1,16 +1,26 @@
 import Link from "next/link";
-import { AlertTriangle, BellRing, CalendarDays, Megaphone } from "lucide-react";
+import {
+  AlertTriangle,
+  BellRing,
+  CalendarDays,
+  Megaphone,
+  Share2,
+} from "lucide-react";
 import { CampaignPostAssignmentForm } from "@/components/campaigns/campaign-post-assignment-form";
 import { CreateCampaignPostForm } from "@/components/campaigns/create-campaign-post-form";
+import { CreateSocialAccountForm } from "@/components/campaigns/create-social-account-form";
 import { DeleteCampaignPostButton } from "@/components/campaigns/delete-campaign-post-button";
 import { EditCampaignPostForm } from "@/components/campaigns/edit-campaign-post-form";
+import { ToggleAutoPostButton } from "@/components/campaigns/toggle-auto-post-button";
 import { TogglePostedButton } from "@/components/campaigns/toggle-posted-button";
+import { ToggleSocialAccountButton } from "@/components/campaigns/toggle-social-account-button";
 import { CopyTextButton } from "@/components/shared/copy-text-button";
 import { buildCampaignReminderDraft } from "@/lib/campaign-reminder-drafts";
 import { getCampaignPostReminders } from "@/lib/campaign-reminders";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
+import { getSocialPlatformLabel } from "@/lib/social-platforms";
 
 type CalendarPageProps = {
   searchParams: Promise<{
@@ -47,6 +57,26 @@ export default async function CampaignCalendarPage({
       })
     : [];
 
+  const socialAccounts = restaurant
+    ? await prisma.socialAccount.findMany({
+        where: {
+          restaurantId: restaurant.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          provider: true,
+          displayName: true,
+          accountHandle: true,
+          postingEnabled: true,
+          paused: true,
+          status: true,
+        },
+      })
+    : [];
+
   const posts = restaurant
     ? await prisma.campaignPost.findMany({
         where: {
@@ -63,6 +93,7 @@ export default async function CampaignCalendarPage({
         include: {
           campaign: true,
           assignedTeamMember: true,
+          socialAccount: true,
         },
       })
     : [];
@@ -97,6 +128,23 @@ export default async function CampaignCalendarPage({
           Each scheduled post now has copy-ready reminder messages. Use them to
           remind yourself or staff what to post, where to post it, and when.
         </p>
+      </section>
+
+      <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+        <div className="flex items-start gap-3">
+          <Share2 size={18} className="mt-1 text-emerald-300" />
+          <div>
+            <h2 className="text-base font-semibold text-white">
+              Social auto-posting
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              Connect approved channels, choose them on scheduled posts, then
+              pause or resume auto-posting per account or per post. WhatsApp
+              Status remains manual-only because normal Cloud API status
+              publishing is not available.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -232,10 +280,15 @@ export default async function CampaignCalendarPage({
       )}
 
       <section className="grid gap-4 xl:grid-cols-[0.75fr_1.25fr]">
-        <CreateCampaignPostForm
-          campaigns={campaigns}
-          teamMembers={teamMembers}
-        />
+        <div className="space-y-4">
+          <CreateCampaignPostForm
+            campaigns={campaigns}
+            teamMembers={teamMembers}
+            socialAccounts={socialAccounts}
+          />
+
+          <CreateSocialAccountForm />
+        </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
           <h2 className="text-base font-semibold text-white">
@@ -277,6 +330,26 @@ export default async function CampaignCalendarPage({
                                 }`
                               : "Unassigned"}
                           </span>
+                          {post.socialAccount && (
+                            <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+                              Auto: {post.socialAccount.displayName}
+                            </span>
+                          )}
+                          {post.autoPostEnabled && (
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs ${
+                                post.autoPostPaused
+                                  ? "bg-yellow-400/10 text-yellow-300"
+                                  : post.autoPostStatus === "FAILED"
+                                    ? "bg-red-400/10 text-red-300"
+                                    : "bg-blue-400/10 text-blue-300"
+                              }`}
+                            >
+                              {post.autoPostPaused
+                                ? "Auto paused"
+                                : post.autoPostStatus}
+                            </span>
+                          )}
                           {post.scheduledAt < new Date() && (
                             <span className="rounded-full bg-red-400/10 px-3 py-1 text-xs text-red-300">
                               Overdue
@@ -311,6 +384,12 @@ export default async function CampaignCalendarPage({
 
                       <div className="action-row">
                         <TogglePostedButton id={post.id} posted={post.posted} />
+                        {post.autoPostEnabled && (
+                          <ToggleAutoPostButton
+                            id={post.id}
+                            paused={post.autoPostPaused}
+                          />
+                        )}
                         <CopyTextButton
                           value={drafts.whatsapp}
                           label="Copy WhatsApp reminder"
@@ -336,8 +415,16 @@ export default async function CampaignCalendarPage({
                         platform: post.platform,
                         scheduledAt: post.scheduledAt,
                         notes: post.notes,
+                        socialAccountId: post.socialAccountId,
+                        autoPostEnabled: post.autoPostEnabled,
                       }}
+                      socialAccounts={socialAccounts}
                     />
+                    {post.autoPostError && (
+                      <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 p-3 text-xs leading-5 text-red-100">
+                        Auto-post error: {post.autoPostError}
+                      </p>
+                    )}
                   </div>
                 );
               })
@@ -383,6 +470,12 @@ export default async function CampaignCalendarPage({
 
                     <div className="action-row">
                       <TogglePostedButton id={post.id} posted={post.posted} />
+                      {post.autoPostEnabled && (
+                        <ToggleAutoPostButton
+                          id={post.id}
+                          paused={post.autoPostPaused}
+                        />
+                      )}
                       <CopyTextButton
                         value={drafts.whatsapp}
                         label="Copy reminder"
@@ -404,11 +497,68 @@ export default async function CampaignCalendarPage({
                       platform: post.platform,
                       scheduledAt: post.scheduledAt,
                       notes: post.notes,
+                      socialAccountId: post.socialAccountId,
+                      autoPostEnabled: post.autoPostEnabled,
                     }}
+                    socialAccounts={socialAccounts}
                   />
                 </div>
               );
             })
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="text-base font-semibold text-white">
+          Connected social channels
+        </h2>
+
+        <div className="mt-5 space-y-3">
+          {socialAccounts.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5 text-sm text-zinc-400">
+              No social channels saved yet. Add a channel permission before
+              enabling automatic campaign publishing.
+            </div>
+          ) : (
+            socialAccounts.map((account) => (
+              <div
+                key={account.id}
+                className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-zinc-900/70 p-4 md:flex-row md:items-center md:justify-between"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {account.displayName}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {getSocialPlatformLabel(account.provider)}
+                    {account.accountHandle ? ` - ${account.accountHandle}` : ""}
+                  </p>
+                </div>
+
+                <div className="action-row">
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs ${
+                      account.postingEnabled && !account.paused
+                        ? "bg-emerald-400/10 text-emerald-300"
+                        : "bg-yellow-400/10 text-yellow-300"
+                    }`}
+                  >
+                    {account.postingEnabled
+                      ? account.paused
+                        ? "Paused"
+                        : "Posting enabled"
+                      : "Manual only"}
+                  </span>
+                  {account.postingEnabled && (
+                    <ToggleSocialAccountButton
+                      id={account.id}
+                      paused={account.paused}
+                    />
+                  )}
+                </div>
+              </div>
+            ))
           )}
         </div>
       </section>
