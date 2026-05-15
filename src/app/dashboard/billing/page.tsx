@@ -2,13 +2,14 @@ import { Check, CreditCard, ShieldCheck } from "lucide-react";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import {
+  getBillingHistory,
   getPlanLabel,
   getPlanPrice,
   getRestaurantBilling,
 } from "@/lib/billing";
 import { getMonthlyAIUsage } from "@/lib/ai/usage-limits";
 import { getMonthlyMediaUsage } from "@/lib/media/usage-limits";
-import { billingHistory, billingPlans } from "@/lib/site";
+import { billingPlans } from "@/lib/site";
 import { getRestaurantUsage } from "@/lib/usage";
 import { requirePermission } from "@/lib/require-permission";
 
@@ -24,6 +25,7 @@ export default async function BillingPage() {
   const mediaUsage = restaurant
     ? await getMonthlyMediaUsage(restaurant.id)
     : null;
+  const billingHistory = restaurant ? await getBillingHistory(restaurant.id) : [];
 
   const currentPlan = subscription?.plan || "starter";
   const currentStatus = subscription?.status || "FREE";
@@ -291,6 +293,7 @@ export default async function BillingPage() {
               label={
                 currentPlan === plan.id ? "Current plan" : `Choose ${plan.name}`
               }
+              disabled={currentPlan === plan.id}
             />
           </div>
         ))}
@@ -310,9 +313,16 @@ export default async function BillingPage() {
         </div>
 
         <div className="space-y-3">
+          {billingHistory.length === 0 && (
+            <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5 text-sm text-zinc-400">
+              No real billing payments recorded yet. Completed Paystack charges
+              will appear here after callback or webhook verification.
+            </div>
+          )}
+
           {billingHistory.map((item) => (
             <div
-              key={item.invoice}
+              key={item.reference}
               className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-zinc-900/70 p-4 md:flex-row md:items-center md:justify-between"
             >
               <div>

@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getNextBillingDate } from "@/lib/billing";
 import { verifyPaystackSignature } from "@/lib/paystack-webhook";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-
-function getNextBillingDate() {
-  const date = new Date();
-  date.setMonth(date.getMonth() + 1);
-  return date;
-}
 
 export async function POST(request: NextRequest) {
   try {
