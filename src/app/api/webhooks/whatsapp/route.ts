@@ -10,6 +10,7 @@ import { matchFAQ } from "@/lib/faq-matcher";
 import { buildMenuReply, isMenuRequest } from "@/lib/menu-reply";
 import { prisma } from "@/lib/prisma";
 import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
+import { getRestaurantTrialAccessStatus } from "@/lib/trial-access";
 import { handleWhatsAppOrder } from "@/lib/whatsapp-orders";
 
 export async function GET(request: NextRequest) {
@@ -76,6 +77,16 @@ export async function POST(request: NextRequest) {
       customerName: contactName,
       message: text,
     });
+
+    const access = await getRestaurantTrialAccessStatus(restaurant.id);
+
+    if (access && !access.allowed) {
+      console.warn("WhatsApp automation paused because trial is expired:", {
+        restaurantId: restaurant.id,
+      });
+
+      return NextResponse.json({ received: true });
+    }
 
     if (conversation.status !== "HUMAN_TAKEOVER" && isMenuRequest(text)) {
       const menuReply = await buildMenuReply(restaurant.id);

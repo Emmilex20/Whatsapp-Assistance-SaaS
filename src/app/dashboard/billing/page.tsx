@@ -1,5 +1,6 @@
 import { Check, CreditCard, ShieldCheck } from "lucide-react";
 import { CheckoutButton } from "@/components/billing/checkout-button";
+import { TrialStatusBanner } from "@/components/billing/trial-status-banner";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import {
   getBillingHistory,
@@ -12,6 +13,10 @@ import { getMonthlyMediaUsage } from "@/lib/media/usage-limits";
 import { billingPlans } from "@/lib/site";
 import { getRestaurantUsage } from "@/lib/usage";
 import { requirePermission } from "@/lib/require-permission";
+import {
+  getCurrentTrialAccessStatus,
+  isPaidSubscriptionActive,
+} from "@/lib/trial-access";
 
 export default async function BillingPage() {
   await requirePermission("manage_billing");
@@ -26,9 +31,11 @@ export default async function BillingPage() {
     ? await getMonthlyMediaUsage(restaurant.id)
     : null;
   const billingHistory = restaurant ? await getBillingHistory(restaurant.id) : [];
+  const access = await getCurrentTrialAccessStatus();
 
   const currentPlan = subscription?.plan || "starter";
   const currentStatus = subscription?.status || "FREE";
+  const paidSubscriptionActive = isPaidSubscriptionActive(subscription);
 
   return (
     <div className="space-y-6">
@@ -43,6 +50,8 @@ export default async function BillingPage() {
         </p>
       </section>
 
+      <TrialStatusBanner access={access} />
+
       <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white">
@@ -50,7 +59,8 @@ export default async function BillingPage() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-white">
-              Current plan: {getPlanLabel(currentPlan)}
+              Current plan:{" "}
+              {paidSubscriptionActive ? getPlanLabel(currentPlan) : "Free trial"}
             </h2>
             <p className="text-sm text-zinc-300">
               Status: {currentStatus}
@@ -283,17 +293,22 @@ export default async function BillingPage() {
 
             {currentPlan === plan.id && (
               <p className="mt-3 text-xs text-emerald-300">
-                You are currently on the {getPlanLabel(currentPlan)} plan at{" "}
-                {getPlanPrice(currentPlan)} / month.
+                {paidSubscriptionActive
+                  ? `You are currently on the ${getPlanLabel(
+                      currentPlan
+                    )} plan at ${getPlanPrice(currentPlan)} / month.`
+                  : "You can subscribe to this plan to continue after your free trial."}
               </p>
             )}
 
             <CheckoutButton
               planId={plan.id}
               label={
-                currentPlan === plan.id ? "Current plan" : `Choose ${plan.name}`
+                paidSubscriptionActive && currentPlan === plan.id
+                  ? "Current plan"
+                  : `Choose ${plan.name}`
               }
-              disabled={currentPlan === plan.id}
+              disabled={paidSubscriptionActive && currentPlan === plan.id}
             />
           </div>
         ))}

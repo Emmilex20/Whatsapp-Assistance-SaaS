@@ -1,6 +1,7 @@
 import { getRestaurantBilling } from "@/lib/billing";
 import { getPlanLimits } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
+import { getRestaurantTrialAccessStatus } from "@/lib/trial-access";
 
 function getMonthStart() {
   const now = new Date();
@@ -39,6 +40,22 @@ export async function getMonthlyMediaUsage(restaurantId: string) {
 }
 
 export async function canGenerateMedia(restaurantId: string) {
+  const trialAccess = await getRestaurantTrialAccessStatus(restaurantId);
+
+  if (trialAccess && !trialAccess.allowed) {
+    return {
+      allowed: false,
+      reason:
+        "Your 3-day free trial has ended. Subscribe to continue using ServeFlow.",
+      plan: "starter",
+      limits: getPlanLimits("starter"),
+      usage: {
+        totalGenerations: 0,
+        totalCost: 0,
+      },
+    };
+  }
+
   const monthly = await getMonthlyMediaUsage(restaurantId);
 
   const generationsRemaining =
