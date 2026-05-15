@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkPermission } from "@/lib/require-permission";
 import { safeSendWhatsAppTemplate } from "@/lib/safe-whatsapp-template";
 
 export async function POST(request: NextRequest) {
   try {
+    const allowed = await checkPermission("manage_whatsapp");
+
+    if (!allowed) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
+    }
+
     const body = await request.json();
 
     const to = String(body.to || "").trim();

@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { checkPermission } from "@/lib/require-permission";
 
 export async function createKnowledgeBaseItem(formData: FormData) {
+  const allowed = await checkPermission("manage_ai");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage AI knowledge." };
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -34,6 +41,12 @@ export async function createKnowledgeBaseItem(formData: FormData) {
 }
 
 export async function deleteKnowledgeBaseItem(formData: FormData) {
+  const allowed = await checkPermission("manage_ai");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage AI knowledge.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -53,6 +66,12 @@ export async function deleteKnowledgeBaseItem(formData: FormData) {
 }
 
 export async function toggleKnowledgeBaseItem(formData: FormData) {
+  const allowed = await checkPermission("manage_ai");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage AI knowledge.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {

@@ -41,6 +41,7 @@ export default async function PilotsPage() {
         orderBy: { createdAt: "desc" },
         include: {
           checklist: true,
+          tests: true,
         },
       })
     : [];
@@ -171,6 +172,16 @@ export default async function PilotsPage() {
                         {pilot.status === "ACTIVE" && (
                           <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
                             Converted
+                          </span>
+                        )}
+
+                        {pilot.goLiveApproved ? (
+                          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+                            Go-live approved
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-yellow-400/10 px-3 py-1 text-xs text-yellow-300">
+                            Go-live locked
                           </span>
                         )}
 

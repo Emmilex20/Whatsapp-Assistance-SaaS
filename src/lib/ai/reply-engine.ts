@@ -1,27 +1,33 @@
-import { getOpenAIClient } from "@/lib/ai/client";
+import type { AIEventType } from "@/generated/prisma/client";
 import { findPossibleDeliveryZoneMatches } from "@/lib/ai/delivery-match";
 import { findPossibleMenuMatches } from "@/lib/ai/menu-match";
+import { getAITextProvider } from "@/lib/ai/providers";
 import { buildRestaurantAIContext } from "@/lib/ai/restaurant-context";
+import { logAIUsage } from "@/lib/ai/usage-log";
 import { prisma } from "@/lib/prisma";
 
 type GenerateAIReplySuggestionParams = {
   restaurantId: string;
   conversationId: string;
+  eventType?: Extract<AIEventType, "SUGGESTION" | "AUTO_REPLY">;
 };
 
-function getAIModel() {
+export function getAIModel() {
   const model = process.env.AI_MODEL || "gpt-5-mini";
 
-  if (model === "gpt-5.2-mini") {
-    return "gpt-5-mini";
-  }
+  return model === "gpt-5.2-mini" ? "gpt-5-mini" : model;
+}
 
-  return model;
+export function getAIModelLogName() {
+  const provider = getAITextProvider();
+
+  return `${provider.name}:${getAIModel()}`;
 }
 
 export async function generateAIReplySuggestion({
   restaurantId,
   conversationId,
+  eventType = "SUGGESTION",
 }: GenerateAIReplySuggestionParams) {
   const enabled = process.env.AI_RESPONSES_ENABLED === "true";
 
@@ -178,12 +184,10 @@ Assigned staff: ${
   }
 `.trim();
 
-  const client = getOpenAIClient();
+  const provider = getAITextProvider();
   const model = getAIModel();
 
-  const response = await client.responses.create({
-    model,
-    instructions: `
+  const instructions = `
 You are ServeFlow AI, a careful WhatsApp assistant for a restaurant.
 
 Write ONE short WhatsApp reply for staff to send.
@@ -200,8 +204,9 @@ Hard rules:
 - Do not mention that you are AI.
 - Do not use markdown tables.
 - Maximum 80 words.
-`.trim(),
-    input: `
+`.trim();
+
+  const input = `
 Restaurant context:
 ${context}
 
@@ -221,11 +226,29 @@ Customer previous order history:
 ${customerHistory}
 
 Write the best next WhatsApp reply.
-`.trim(),
+`.trim();
+
+  const result = await provider.generateText({
+    model,
+    instructions,
+    input,
+  });
+
+  const suggestion = result.text || "No suggestion generated.";
+
+  await logAIUsage({
+    restaurantId,
+    conversationId,
+    eventType,
+    model: `${result.provider || provider.name}:${result.model}`,
+    promptTokens: result.promptTokens,
+    outputTokens: result.outputTokens,
+    inputPreview: latestCustomerMessage,
+    outputPreview: suggestion,
   });
 
   return {
     skipped: false,
-    suggestion: response.output_text || "No suggestion generated.",
+    suggestion,
   };
 }

@@ -6,15 +6,24 @@ import {
   getPlanPrice,
   getRestaurantBilling,
 } from "@/lib/billing";
+import { getMonthlyAIUsage } from "@/lib/ai/usage-limits";
+import { getMonthlyMediaUsage } from "@/lib/media/usage-limits";
 import { billingHistory, billingPlans } from "@/lib/site";
 import { getRestaurantUsage } from "@/lib/usage";
+import { requirePermission } from "@/lib/require-permission";
 
 export default async function BillingPage() {
+  await requirePermission("manage_billing");
+
   const restaurant = await getOrCreateCurrentRestaurant();
   const subscription = restaurant
     ? await getRestaurantBilling(restaurant.id)
     : null;
   const usage = restaurant ? await getRestaurantUsage(restaurant.id) : null;
+  const aiUsage = restaurant ? await getMonthlyAIUsage(restaurant.id) : null;
+  const mediaUsage = restaurant
+    ? await getMonthlyMediaUsage(restaurant.id)
+    : null;
 
   const currentPlan = subscription?.plan || "starter";
   const currentStatus = subscription?.status || "FREE";
@@ -107,6 +116,113 @@ export default async function BillingPage() {
               </div>
             );
           })}
+        </section>
+      )}
+
+      {aiUsage && (
+        <section className="rounded-3xl border border-blue-400/20 bg-blue-400/10 p-5">
+          <h2 className="text-base font-semibold text-white">
+            AI usage this month
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-blue-100">
+            Current plan: {aiUsage.plan}. AI usage is limited to protect your
+            monthly costs.
+          </p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {[
+              {
+                label: "AI events",
+                value: aiUsage.usage.totalEvents,
+                limit: aiUsage.limits.monthlyAIEvents,
+              },
+              {
+                label: "AI tokens",
+                value: aiUsage.usage.totalTokens,
+                limit: aiUsage.limits.monthlyAITokens,
+              },
+            ].map((item) => {
+              const percent = Math.min((item.value / item.limit) * 100, 100);
+
+              return (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-zinc-300">{item.label}</p>
+                    <p className="text-sm font-semibold text-white">
+                      {item.value.toLocaleString()} /{" "}
+                      {item.limit.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 h-2 rounded-full bg-zinc-800">
+                    <div
+                      className="h-2 rounded-full bg-emerald-500"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {mediaUsage && (
+        <section className="rounded-3xl border border-purple-400/20 bg-purple-400/10 p-5">
+          <h2 className="text-base font-semibold text-white">
+            Media usage this month
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-purple-100">
+            Current plan: {mediaUsage.plan}. Media generation is limited because
+            Replicate can become expensive.
+          </p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {[
+              {
+                label: "Generations",
+                value: mediaUsage.usage.totalGenerations,
+                limit: mediaUsage.limits.monthlyMediaGenerations,
+              },
+              {
+                label: "Estimated cost",
+                value: mediaUsage.usage.totalCost,
+                limit: mediaUsage.limits.monthlyMediaCostLimit,
+                money: true,
+              },
+            ].map((item) => {
+              const percent = Math.min((item.value / item.limit) * 100, 100);
+
+              return (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-zinc-300">{item.label}</p>
+
+                    <p className="text-sm font-semibold text-white">
+                      {item.money
+                        ? `$${item.value.toFixed(3)} / $${item.limit}`
+                        : `${item.value.toLocaleString()} / ${item.limit.toLocaleString()}`}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 h-2 rounded-full bg-zinc-800">
+                    <div
+                      className="h-2 rounded-full bg-emerald-500"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
 

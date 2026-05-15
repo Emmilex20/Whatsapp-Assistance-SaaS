@@ -2,10 +2,12 @@ import Link from "next/link";
 import type { TeamRole } from "@/generated/prisma/client";
 import { BarChart3, Mail, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { removeTeamMember, updateTeamMemberRole } from "@/actions/team";
+import { EmptyState } from "@/components/shared/empty-state";
 import { InviteTeamMemberForm } from "@/components/team/invite-team-member-form";
 import { Button } from "@/components/ui/button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/require-permission";
 import { getRestaurantUsage } from "@/lib/usage";
 
 const roleStyles: Record<TeamRole, string> = {
@@ -17,6 +19,8 @@ const roleStyles: Record<TeamRole, string> = {
 const roles: TeamRole[] = ["AGENT", "MANAGER", "OWNER"];
 
 export default async function TeamPage() {
+  await requirePermission("manage_team");
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   const teamMembers = restaurant
@@ -26,6 +30,7 @@ export default async function TeamPage() {
         include: {
           assignedConversations: true,
           assignedOrders: true,
+          assignedCampaignPosts: true,
         },
       })
     : [];
@@ -46,12 +51,20 @@ export default async function TeamPage() {
           </p>
         </div>
 
-        <Link href="/dashboard/team/analytics">
-          <Button className="h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
-            <BarChart3 className="mr-2" size={16} />
-            Agent analytics
-          </Button>
-        </Link>
+        <div className="action-row">
+          <Link href="/dashboard/tasks">
+            <Button className="h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
+              View tasks
+            </Button>
+          </Link>
+
+          <Link href="/dashboard/team/analytics">
+            <Button className="h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
+              <BarChart3 className="mr-2" size={16} />
+              Agent analytics
+            </Button>
+          </Link>
+        </div>
       </section>
 
       {usage && (
@@ -96,9 +109,11 @@ export default async function TeamPage() {
 
           <div className="mt-5 space-y-3">
             {teamMembers.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5 text-sm text-zinc-400">
-                No team members yet. Invite your first staff member.
-              </div>
+              <EmptyState
+                icon={UserRound}
+                title="No team members yet"
+                description="Invite staff so conversations, orders, and campaign posts can be assigned clearly."
+              />
             ) : (
               teamMembers.map((member) => (
                 <div
@@ -149,11 +164,15 @@ export default async function TeamPage() {
                           <span className="rounded-full bg-white/[0.04] px-3 py-1">
                             {member.assignedOrders.length} orders
                           </span>
+
+                          <span className="rounded-full bg-white/[0.04] px-3 py-1">
+                            {member.assignedCampaignPosts.length} campaign posts
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="action-row">
                       {roles.map((role) => (
                         <form key={role} action={updateTeamMemberRole}>
                           <input type="hidden" name="id" value={member.id} />

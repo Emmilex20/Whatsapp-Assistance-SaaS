@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
+import { checkPermission } from "@/lib/require-permission";
 
 export async function assignConversation(formData: FormData) {
+  const allowed = await checkPermission("manage_inbox");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage inbox assignments.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -28,6 +35,12 @@ export async function assignConversation(formData: FormData) {
 }
 
 export async function assignOrder(formData: FormData) {
+  const allowed = await checkPermission("manage_orders");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage order assignments.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {

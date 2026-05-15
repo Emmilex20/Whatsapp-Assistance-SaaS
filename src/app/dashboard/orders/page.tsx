@@ -128,7 +128,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             Filter by assignment
           </p>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="action-row">
             <a
               href={ordersFilterHref({ assigned: "all" })}
               className={`rounded-full px-4 py-2 text-sm transition ${
@@ -172,7 +172,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             Filter by status
           </p>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="action-row">
             {statusFilters.map((status) => (
               <a
                 key={status}

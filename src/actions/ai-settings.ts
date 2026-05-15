@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
+import { checkPermission } from "@/lib/require-permission";
 
 export async function updateAIAutoReplySetting(formData: FormData) {
+  const allowed = await checkPermission("manage_ai");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage AI settings." };
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {

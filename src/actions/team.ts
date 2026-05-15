@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { TeamRole } from "@/generated/prisma/client";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
+import { checkPermission } from "@/lib/require-permission";
 import { getRestaurantUsage, isAtLimit } from "@/lib/usage";
 
 const validTeamRoles: TeamRole[] = ["OWNER", "MANAGER", "AGENT"];
@@ -15,6 +16,12 @@ function parseTeamRole(value: FormDataEntryValue | null): TeamRole {
 }
 
 export async function inviteTeamMember(formData: FormData) {
+  const allowed = await checkPermission("manage_team");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage team members." };
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -66,6 +73,12 @@ export async function inviteTeamMember(formData: FormData) {
 }
 
 export async function updateTeamMemberRole(formData: FormData) {
+  const allowed = await checkPermission("manage_team");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage team members.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -88,6 +101,12 @@ export async function updateTeamMemberRole(formData: FormData) {
 }
 
 export async function removeTeamMember(formData: FormData) {
+  const allowed = await checkPermission("manage_team");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage team members.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {

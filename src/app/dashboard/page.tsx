@@ -1,7 +1,9 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BellRing,
   Bot,
+  CalendarDays,
   CheckCircle2,
   MessageSquareText,
   Settings,
@@ -11,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SetupGuide } from "@/components/dashboard/setup-guide";
+import { getCampaignPostReminders } from "@/lib/campaign-reminders";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { getDashboardOverview } from "@/lib/dashboard";
 import { getRestaurantUsage } from "@/lib/usage";
@@ -20,6 +23,9 @@ export default async function DashboardPage() {
 
   const overview = restaurant ? await getDashboardOverview(restaurant.id) : null;
   const usage = restaurant ? await getRestaurantUsage(restaurant.id) : null;
+  const campaignReminders = restaurant
+    ? await getCampaignPostReminders(restaurant.id)
+    : null;
   const completedSetupGuide = [
     overview?.restaurant?.name && overview.restaurant.name !== "My Restaurant"
       ? "Complete restaurant profile"
@@ -77,6 +83,41 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </section>
+
+      {campaignReminders &&
+        (campaignReminders.overdue.length > 0 ||
+          campaignReminders.dueToday.length > 0) && (
+          <section className="rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-400/20 text-yellow-100">
+                  <BellRing size={18} />
+                </div>
+
+                <div>
+                  <h2 className="text-base font-semibold text-white">
+                    Campaign posting reminders
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-6 text-yellow-100">
+                    You have {campaignReminders.dueToday.length} post
+                    {campaignReminders.dueToday.length === 1 ? "" : "s"} due
+                    today and {campaignReminders.overdue.length} overdue post
+                    {campaignReminders.overdue.length === 1 ? "" : "s"}.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/dashboard/campaigns/calendar"
+                className="inline-flex h-10 items-center rounded-full bg-white px-5 text-sm font-medium text-zinc-950 hover:bg-zinc-200"
+              >
+                <CalendarDays className="mr-2" size={16} />
+                Open calendar
+              </Link>
+            </div>
+          </section>
+        )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (

@@ -6,6 +6,8 @@ type EmptyStateProps = {
   icon: LucideIcon;
   title: string;
   description: string;
+  actionLabel?: string;
+  actionHref?: string;
   action?: string;
   href?: string;
 };
@@ -14,9 +16,14 @@ export function EmptyState({
   icon: Icon,
   title,
   description,
+  actionLabel,
+  actionHref,
   action,
   href,
 }: EmptyStateProps) {
+  const label = actionLabel || action;
+  const target = actionHref || href;
+
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
@@ -29,17 +36,17 @@ export function EmptyState({
         {description}
       </p>
 
-      {action && href && (
-        <Link href={href}>
+      {label && target && (
+        <Link href={target}>
           <Button className="mt-5 h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
-            {action}
+            {label}
           </Button>
         </Link>
       )}
 
-      {action && !href && (
+      {label && !target && (
         <Button className="mt-5 h-10 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
-          {action}
+          {label}
         </Button>
       )}
     </div>

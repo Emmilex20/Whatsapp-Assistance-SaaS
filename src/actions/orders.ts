@@ -6,6 +6,7 @@ import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { findMatchingDeliveryZone } from "@/lib/delivery-fee";
 import { getOrderStatusMessage } from "@/lib/order-status-message";
 import { prisma } from "@/lib/prisma";
+import { checkPermission } from "@/lib/require-permission";
 import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 
 const ORDER_STATUSES: OrderStatus[] = [
@@ -18,6 +19,12 @@ const ORDER_STATUSES: OrderStatus[] = [
 ];
 
 export async function createManualOrder(formData: FormData) {
+  const allowed = await checkPermission("manage_orders");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage orders." };
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -80,6 +87,12 @@ export async function createManualOrder(formData: FormData) {
 }
 
 export async function updateOrderStatus(formData: FormData) {
+  const allowed = await checkPermission("manage_orders");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage orders.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -145,6 +158,12 @@ export async function updateOrderStatus(formData: FormData) {
 }
 
 export async function confirmOrder(formData: FormData) {
+  const allowed = await checkPermission("manage_orders");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage orders.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {

@@ -1,5 +1,10 @@
-import { generateAIReplySuggestion } from "@/lib/ai/reply-engine";
+import {
+  generateAIReplySuggestion,
+  getAIModelLogName,
+} from "@/lib/ai/reply-engine";
 import { getBlockedAIReason } from "@/lib/ai/safety";
+import { logAIUsage } from "@/lib/ai/usage-log";
+import { canUseAI } from "@/lib/ai/usage-limits";
 
 type GenerateAIAutoReplyParams = {
   restaurantId: string;
@@ -15,6 +20,15 @@ export async function generateAIAutoReply({
   const blockReason = getBlockedAIReason(latestCustomerMessage);
 
   if (blockReason) {
+    await logAIUsage({
+      restaurantId,
+      conversationId,
+      eventType: "BLOCKED_AUTO_REPLY",
+      model: getAIModelLogName(),
+      inputPreview: latestCustomerMessage,
+      blockedReason: blockReason,
+    });
+
     return {
       blocked: true,
       reason: blockReason,
@@ -22,9 +36,29 @@ export async function generateAIAutoReply({
     };
   }
 
+  const aiLimit = await canUseAI(restaurantId);
+
+  if (!aiLimit.allowed) {
+    await logAIUsage({
+      restaurantId,
+      conversationId,
+      eventType: "BLOCKED_AUTO_REPLY",
+      model: getAIModelLogName(),
+      inputPreview: latestCustomerMessage,
+      blockedReason: aiLimit.reason,
+    });
+
+    return {
+      blocked: true,
+      reason: aiLimit.reason,
+      reply: "",
+    };
+  }
+
   const result = await generateAIReplySuggestion({
     restaurantId,
     conversationId,
+    eventType: "AUTO_REPLY",
   });
 
   if (result.skipped) {

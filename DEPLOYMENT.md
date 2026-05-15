@@ -1,69 +1,17 @@
-# ServeFlow Deployment Guide
+# ServeFlow Production Deployment
 
 ## 1. Database
 
-Use a PostgreSQL database provider.
-
-Add:
-
-```env
-DATABASE_URL=
-```
-
-Then run:
+- Create a production PostgreSQL database.
+- Add `DATABASE_URL` to production environment variables.
+- Run:
 
 ```bash
 pnpm dlx prisma db push
 pnpm dlx prisma generate
 ```
 
-## 2. Clerk
-
-Create a Clerk app and add:
-
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-```
-
-## 3. Paystack
-
-Create Paystack plans and add:
-
-```env
-PAYSTACK_SECRET_KEY=
-PAYSTACK_STARTER_PLAN_CODE=
-PAYSTACK_GROWTH_PLAN_CODE=
-PAYSTACK_PREMIUM_PLAN_CODE=
-```
-
-Webhook URL:
-
-```txt
-https://your-domain.com/api/webhooks/paystack
-```
-
-## 4. WhatsApp Cloud API
-
-Add:
-
-```env
-WHATSAPP_VERIFY_TOKEN=
-WHATSAPP_ACCESS_TOKEN=
-WHATSAPP_PHONE_NUMBER_ID=
-WHATSAPP_API_VERSION=v21.0
-WHATSAPP_SEND_ENABLED=false
-```
-
-Webhook URL:
-
-```txt
-https://your-domain.com/api/webhooks/whatsapp
-```
-
-## 5. Vercel
-
-Add all environment variables in Vercel dashboard.
+## 2. App URL
 
 Set:
 
@@ -71,12 +19,85 @@ Set:
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 ```
 
-## 6. Final Safety
+## 3. WhatsApp Cloud API
 
-Keep:
+Set:
 
 ```env
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_VERIFY_TOKEN=
+WHATSAPP_API_VERSION=v21.0
 WHATSAPP_SEND_ENABLED=false
 ```
 
-until all test flows are confirmed.
+Webhook callback:
+
+```txt
+https://your-domain.com/api/webhooks/whatsapp
+```
+
+Enable real sending only after inbound testing works:
+
+```env
+WHATSAPP_SEND_ENABLED=true
+```
+
+## 4. AI
+
+Set:
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=
+AI_MODEL=gpt-5.2-mini
+AI_RESPONSES_ENABLED=false
+```
+
+Enable AI only after restaurant data is complete.
+
+## 5. Media / Replicate
+
+Set only if using media generation:
+
+```env
+REPLICATE_API_TOKEN=
+REPLICATE_IMAGE_MODEL=black-forest-labs/flux-schnell
+MEDIA_GENERATION_ENABLED=false
+```
+
+## 6. Final Checks
+
+- Run security review.
+- Run mobile audit.
+- Test pilot restaurant.
+- Confirm WhatsApp test send.
+- Confirm AI cost limits.
+- Confirm report export.
+
+## 7. Real Pilot Launch
+
+Before onboarding a real restaurant:
+
+- Complete restaurant profile.
+- Add menu, delivery zones, FAQs, and knowledge base.
+- Configure WhatsApp webhook.
+- Test inbound message.
+- Test manual reply.
+- Test AI suggestion.
+- Test blocked AI safety.
+- Test order flow.
+- Test human takeover.
+- Keep auto-reply disabled until owner approves.
+- Approve go-live only after all pilot tests pass.
+
+## Batch 98 Complete
+
+```txt
+Production checklist added
+Env status helper added
+Deployment readiness page added
+Production env example added
+Deployment notes file added
+Final check links updated
+```

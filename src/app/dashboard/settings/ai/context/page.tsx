@@ -2,8 +2,11 @@ import Link from "next/link";
 import { ArrowLeft, BrainCircuit } from "lucide-react";
 import { buildRestaurantAIContext } from "@/lib/ai/restaurant-context";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { requirePermission } from "@/lib/require-permission";
 
 export default async function AIContextPage() {
+  await requirePermission("manage_ai");
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   const context = restaurant

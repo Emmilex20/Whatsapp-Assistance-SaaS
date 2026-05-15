@@ -10,12 +10,16 @@ export default async function DashboardLayout({
   await getOrCreateCurrentRestaurant();
 
   return (
-    <main className="min-h-screen bg-zinc-950">
-      <DashboardSidebar />
+    <main className="min-h-screen min-w-0 bg-zinc-950 print:bg-white">
+      <div className="print:hidden">
+        <DashboardSidebar />
+      </div>
 
-      <section className="lg:pl-64">
-        <DashboardTopbar />
-        <div className="p-4 lg:p-6">{children}</div>
+      <section className="min-w-0 lg:pl-64 print:pl-0">
+        <div className="print:hidden">
+          <DashboardTopbar />
+        </div>
+        <div className="min-w-0 p-4 print:p-0 lg:p-6">{children}</div>
       </section>
     </main>
   );

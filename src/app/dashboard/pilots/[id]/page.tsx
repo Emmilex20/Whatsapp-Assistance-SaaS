@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarCheck,
   Clock,
+  FlaskConical,
   Mail,
   MapPin,
   Phone,
@@ -14,10 +15,13 @@ import { notFound } from "next/navigation";
 import type { PilotStatus } from "@/generated/prisma/client";
 import { deletePilotClient, updatePilotStatus } from "@/actions/pilot";
 import { ConvertPilotButton } from "@/components/pilots/convert-pilot-button";
+import { CreateDefaultTestsButton } from "@/components/pilots/create-default-tests-button";
+import { PilotGoLiveCard } from "@/components/pilots/pilot-go-live-card";
 import { PilotChecklist } from "@/components/pilots/pilot-checklist";
 import { PilotFollowUpForm } from "@/components/pilots/pilot-follow-up-form";
 import { Button } from "@/components/ui/button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { getPilotGoLiveStatus } from "@/lib/pilot-go-live";
 import { prisma } from "@/lib/prisma";
 
 type PageProps = {
@@ -57,12 +61,18 @@ export default async function PilotDetailPage({ params }: PageProps) {
               createdAt: "asc",
             },
           },
+          tests: {
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
         },
       })
     : null;
 
   if (!pilot) notFound();
 
+  const goLiveStatus = getPilotGoLiveStatus(pilot.tests);
   const timeline = [
     {
       title: "Pilot created",
@@ -133,6 +143,16 @@ export default async function PilotDetailPage({ params }: PageProps) {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Link href={`/dashboard/pilots/${pilot.id}/testing`}>
+              <Button
+                variant="outline"
+                className="h-10 rounded-full border-white/10 bg-white/[0.03] px-5 text-sm text-white hover:bg-white/10"
+              >
+                <FlaskConical className="mr-2" size={16} />
+                Testing flow
+              </Button>
+            </Link>
+
             <ConvertPilotButton pilotId={pilot.id} />
 
             <form action={deletePilotClient}>
@@ -147,6 +167,23 @@ export default async function PilotDetailPage({ params }: PageProps) {
           </div>
         </div>
       </section>
+
+      <PilotGoLiveCard
+        pilotId={pilot.id}
+        approved={pilot.goLiveApproved}
+        approvedAt={pilot.goLiveApprovedAt?.toISOString() || null}
+        canGoLive={goLiveStatus.canGoLive}
+        passedRequiredCount={goLiveStatus.passedRequiredCount}
+        requiredCount={goLiveStatus.requiredCount}
+        missingRequired={goLiveStatus.missingRequired}
+        incompleteRequired={goLiveStatus.incompleteRequired.map((test) => ({
+          title: test.title,
+        }))}
+        failedRequired={goLiveStatus.failedRequired.map((test) => ({
+          title: test.title,
+        }))}
+        goLiveNotes={pilot.goLiveNotes}
+      />
 
       {pilot.status !== "ACTIVE" && (
         <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
@@ -233,6 +270,47 @@ export default async function PilotDetailPage({ params }: PageProps) {
           </div>
 
           <PilotChecklist pilotId={pilot.id} items={pilot.checklist} />
+
+          {pilot.tests.length > 0 ? (
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+              <h2 className="text-base font-semibold text-white">
+                Pilot test progress
+              </h2>
+
+              <p className="mt-1 text-sm text-zinc-500">
+                {pilot.tests.filter((test) => test.status === "PASSED").length}
+                /{pilot.tests.length} tests passed
+              </p>
+
+              <div className="mt-4 h-2 rounded-full bg-zinc-800">
+                <div
+                  className="h-2 rounded-full bg-emerald-500"
+                  style={{
+                    width: `${Math.round(
+                      (pilot.tests.filter((test) => test.status === "PASSED")
+                        .length /
+                        pilot.tests.length) *
+                        100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5">
+              <h2 className="text-base font-semibold text-white">
+                No pilot tests yet
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-300">
+                Create the default testing checklist for older pilot clients
+                created before this flow existed.
+              </p>
+
+              <div className="mt-4">
+                <CreateDefaultTestsButton pilotId={pilot.id} />
+              </div>
+            </div>
+          )}
 
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
             <h2 className="text-base font-semibold text-white">

@@ -44,6 +44,13 @@ enum PilotStatus {
   NOT_INTERESTED
 }
 
+enum PilotTestStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PASSED
+  FAILED
+}
+
 enum TeamRole {
   OWNER
   MANAGER
@@ -61,6 +68,25 @@ enum ConversationWorkflowStatus {
   OPEN
   PENDING
   RESOLVED
+}
+
+enum AIEventType {
+  SUGGESTION
+  AUTO_REPLY
+  BLOCKED_AUTO_REPLY
+}
+
+enum PromoCampaignStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ReportArchiveType {
+  WEEKLY
+  MONTHLY
 }
 
 model User {
@@ -84,6 +110,12 @@ model Restaurant {
   address               String?
   openingTime           String?
   closingTime           String?
+  brandPrimaryColor     String?
+  brandSecondaryColor   String?
+  brandSlogan           String?
+  brandTone             String?
+  brandLogoUrl          String?
+  brandVisualStyle      String?
   aiAutoReplyEnabled    Boolean  @default(false)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -99,6 +131,10 @@ model Restaurant {
   pilotClients  PilotClient[]
   teamMembers   TeamMember[]
   knowledgeBaseItems KnowledgeBaseItem[]
+  aiUsageLogs AIUsageLog[]
+  mediaGenerations MediaGeneration[]
+  promoCampaigns PromoCampaign[]
+  reportArchives ReportArchive[]
 }
 
 model MenuItem {
@@ -162,6 +198,7 @@ model Conversation {
   assignedTeamMember TeamMember? @relation("ConversationAssignments", fields: [assignedTeamMemberId], references: [id], onDelete: SetNull)
   messages           Message[]
   orders             Order[]
+  aiUsageLogs        AIUsageLog[]
 
   @@unique([restaurantId, customerPhone])
 }
@@ -263,6 +300,117 @@ model WebhookEvent {
   createdAt DateTime @default(now())
 }
 
+model AIUsageLog {
+  id             String      @id @default(cuid())
+  restaurantId   String
+  conversationId String?
+  eventType      AIEventType
+  model          String
+  promptTokens   Int         @default(0)
+  outputTokens   Int         @default(0)
+  totalTokens    Int         @default(0)
+  estimatedCost  Float       @default(0)
+  inputPreview   String?
+  outputPreview  String?
+  blockedReason  String?
+  createdAt      DateTime    @default(now())
+
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+}
+
+model MediaGeneration {
+  id           String   @id @default(cuid())
+  restaurantId String
+  campaignId   String?
+  prompt       String
+  model        String
+  outputUrl    String?
+  status       String   @default("COMPLETED")
+  estimatedCost Float   @default(0)
+  templateType String?
+  favorite     Boolean  @default(false)
+  caption      String?
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  campaign   PromoCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+}
+
+model PromoCampaign {
+  id           String              @id @default(cuid())
+  restaurantId String
+  title        String
+  description  String?
+  goal         String?
+  status       PromoCampaignStatus @default(DRAFT)
+  startDate    DateTime?
+  endDate      DateTime?
+  impressions       Int     @default(0)
+  whatsappInquiries Int     @default(0)
+  ordersGenerated   Int     @default(0)
+  revenueGenerated  Int     @default(0)
+  performanceNotes  String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  restaurant Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  media      MediaGeneration[]
+  captionPacks CampaignCaptionPack[]
+  posts      CampaignPost[]
+}
+
+model CampaignCaptionPack {
+  id             String   @id @default(cuid())
+  campaignId     String
+  whatsappStatus String?
+  instagramPost  String?
+  facebookPost   String?
+  hashtags       String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  campaign PromoCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model CampaignPost {
+  id          String   @id @default(cuid())
+  campaignId  String
+  assignedTeamMemberId String?
+  title       String
+  platform    String
+  scheduledAt DateTime
+  posted      Boolean  @default(false)
+  completionNotes String?
+  postedAt    DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign PromoCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  assignedTeamMember TeamMember? @relation("CampaignPostAssignments", fields: [assignedTeamMemberId], references: [id], onDelete: SetNull)
+}
+
+model ReportArchive {
+  id            String            @id @default(cuid())
+  restaurantId  String
+  type          ReportArchiveType
+  title         String
+  periodStart   DateTime
+  periodEnd     DateTime
+  messages      Int               @default(0)
+  orders        Int               @default(0)
+  revenue       Int               @default(0)
+  campaignPosts Int               @default(0)
+  missedPosts   Int               @default(0)
+  aiEvents      Int               @default(0)
+  mediaAssets   Int               @default(0)
+  summaryNote   String?
+  createdAt     DateTime          @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
 model PilotClient {
   id           String      @id @default(cuid())
   restaurantId String
@@ -278,11 +426,15 @@ model PilotClient {
   lastContactedAt DateTime?
   nextContactAt   DateTime?
   followUpNotes   String?
+  goLiveApproved   Boolean   @default(false)
+  goLiveApprovedAt DateTime?
+  goLiveNotes      String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   checklist  PilotChecklistItem[]
+  tests      PilotTest[]
 }
 
 model PilotChecklistItem {
@@ -292,6 +444,19 @@ model PilotChecklistItem {
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  pilot PilotClient @relation(fields: [pilotId], references: [id], onDelete: Cascade)
+}
+
+model PilotTest {
+  id          String          @id @default(cuid())
+  pilotId     String
+  title       String
+  description String?
+  status      PilotTestStatus @default(NOT_STARTED)
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   pilot PilotClient @relation(fields: [pilotId], references: [id], onDelete: Cascade)
 }
@@ -310,6 +475,7 @@ model TeamMember {
   restaurant            Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   assignedConversations Conversation[] @relation("ConversationAssignments")
   assignedOrders        Order[]        @relation("OrderAssignments")
+  assignedCampaignPosts CampaignPost[] @relation("CampaignPostAssignments")
 
   @@unique([restaurantId, email])
 }

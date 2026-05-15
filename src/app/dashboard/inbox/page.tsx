@@ -20,6 +20,7 @@ import { AISuggestionPanel } from "@/components/inbox/ai-suggestion-panel";
 import { ConversationLabelsForm } from "@/components/inbox/conversation-labels-form";
 import { ManualReplyForm } from "@/components/inbox/manual-reply-form";
 import { ConversationStatusForm } from "@/components/inbox/conversation-status-form";
+import { EmptyState } from "@/components/shared/empty-state";
 import { InternalNotesForm } from "@/components/shared/internal-notes-form";
 import { AssignmentSelect } from "@/components/team/assignment-select";
 import { Button } from "@/components/ui/button";
@@ -245,7 +246,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 md:pb-6">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-medium text-emerald-400">Customer inbox</p>
@@ -319,7 +320,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
       </section>
 
       <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-        <div className="flex flex-wrap gap-2">
+        <div className="action-row">
           <a
             href={inboxFilterHref("all")}
             className={`rounded-full px-4 py-2 text-sm transition ${
@@ -357,7 +358,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
           ))}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="action-row mt-3">
           {priorityOptions.map((priority) => (
             <a
               key={priority}
@@ -373,7 +374,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
           ))}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="action-row mt-3">
           {[
             { label: "All SLA", value: "all" },
             { label: "Needs reply", value: "needs_reply" },
@@ -394,7 +395,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
           ))}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="action-row mt-3">
           {workflowOptions.map((status) => (
             <a
               key={status}
@@ -412,20 +413,13 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
       </section>
 
       {filteredConversations.length === 0 ? (
-        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
-            <MessageSquareText size={22} />
-          </div>
-
-          <h2 className="mt-5 text-base font-semibold text-white">
-            No conversations found
-          </h2>
-
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-400">
-            No conversations match this assignment filter. Try viewing all
-            chats or assign a conversation to a team member.
-          </p>
-        </section>
+        <EmptyState
+          icon={MessageSquareText}
+          title="No conversations found"
+          description="No conversations match these filters. Incoming WhatsApp messages will appear here once your webhook is connected."
+          actionLabel="Open WhatsApp settings"
+          actionHref="/dashboard/settings/whatsapp"
+        />
       ) : (
         <section className="grid min-h-170 gap-4 xl:grid-cols-[0.75fr_1.35fr_0.75fr]">
           <aside className="rounded-3xl border border-white/10 bg-white/3 p-4">

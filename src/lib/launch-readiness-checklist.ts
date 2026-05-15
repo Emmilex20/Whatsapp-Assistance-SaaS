@@ -1,0 +1,45 @@
+export const launchReadinessChecklist = [
+  "Production deployment is complete.",
+  "Production database is connected.",
+  "Environment variables are configured.",
+  "WhatsApp webhook is connected to live domain.",
+  "Inbound WhatsApp test passed.",
+  "Manual WhatsApp reply test passed.",
+  "AI suggestions work with restaurant data.",
+  "AI auto-reply remains disabled until owner approves.",
+  "AI safety block test passed.",
+  "Menu, delivery zones, FAQs, and knowledge base are complete.",
+  "Team members and permissions are reviewed.",
+  "Pilot tests are passed.",
+  "Go-live approval is completed.",
+  "Reports and PDF export are tested.",
+  "Billing/subscription settings are reviewed.",
+  "Mobile dashboard audit is completed.",
+  "Security review is completed.",
+];
+
+export const handoverChecklist = [
+  "Show owner how to view inbox.",
+  "Show owner how to take over a chat.",
+  "Show owner how to update menu items.",
+  "Show owner how to update delivery zones.",
+  "Show owner how to check orders.",
+  "Show owner how to assign team members.",
+  "Show owner how to generate reports.",
+  "Show owner how to disable AI auto-reply.",
+  "Show owner where WhatsApp settings are.",
+  "Explain that AI should not handle complaints/refunds automatically.",
+];
+
+export const postLaunchMonitoringChecklist = [
+  "Monitor first 20 real customer messages.",
+  "Check if bot replies are accurate.",
+  "Check if orders are captured correctly.",
+  "Check if staff can take over easily.",
+  "Check failed WhatsApp sends.",
+  "Check AI usage/cost logs.",
+  "Check overdue conversations.",
+  "Check reports after first day.",
+  "Collect owner feedback.",
+  "Fix critical issues before onboarding another restaurant.",
+];

@@ -177,6 +177,42 @@
 }
 
 @layer utilities {
+  .dashboard-page {
+    @apply space-y-6;
+  }
+
+  .dashboard-grid-2 {
+    @apply grid gap-4 md:grid-cols-2;
+  }
+
+  .dashboard-grid-3 {
+    @apply grid gap-4 md:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .dashboard-grid-4 {
+    @apply grid gap-4 md:grid-cols-2 xl:grid-cols-4;
+  }
+
+  .dashboard-grid-5 {
+    @apply grid gap-4 md:grid-cols-2 xl:grid-cols-5;
+  }
+
+  .dashboard-card {
+    @apply rounded-3xl border border-white/10 bg-white/[0.03] p-4 md:p-5;
+  }
+
+  .dashboard-inner-card {
+    @apply rounded-2xl border border-white/10 bg-zinc-900/70 p-4;
+  }
+
+  .action-row {
+    @apply flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible;
+  }
+
+  .action-row > * {
+    flex-shrink: 0;
+  }
+
   .dashboard-nav-scroll {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -191,5 +227,19 @@
 
   .dashboard-nav-scroll::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  a {
+    text-decoration: none !important;
   }
 }

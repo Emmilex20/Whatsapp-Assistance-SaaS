@@ -109,6 +109,14 @@ Opening hours: ${restaurant?.openingTime || "Not provided"} - ${
     restaurant?.closingTime || "Not provided"
   }
 
+Brand kit:
+Primary color: ${restaurant?.brandPrimaryColor || "Not provided"}
+Secondary color: ${restaurant?.brandSecondaryColor || "Not provided"}
+Slogan: ${restaurant?.brandSlogan || "Not provided"}
+Tone: ${restaurant?.brandTone || "Not provided"}
+Visual style: ${restaurant?.brandVisualStyle || "Not provided"}
+Logo URL: ${restaurant?.brandLogoUrl || "Not provided"}
+
 Menu:
 ${menuText}
 

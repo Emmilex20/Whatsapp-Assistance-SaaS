@@ -3,9 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
+import { checkPermission } from "@/lib/require-permission";
 import { getRestaurantUsage, isAtLimit } from "@/lib/usage";
 
 export async function createDeliveryZone(formData: FormData) {
+  const allowed = await checkPermission("manage_settings");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage settings." };
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {
@@ -49,6 +56,12 @@ export async function createDeliveryZone(formData: FormData) {
 }
 
 export async function deleteDeliveryZone(formData: FormData) {
+  const allowed = await checkPermission("manage_settings");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage settings.");
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
   const id = String(formData.get("id") || "");
 

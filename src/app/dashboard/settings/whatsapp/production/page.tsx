@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, CircleAlert } from "lucide-react";
+import { requirePermission } from "@/lib/require-permission";
 
 const envItems = [
   "WHATSAPP_ACCESS_TOKEN",
@@ -10,7 +11,9 @@ const envItems = [
   "NEXT_PUBLIC_APP_URL",
 ];
 
-export default function WhatsAppProductionPage() {
+export default async function WhatsAppProductionPage() {
+  await requirePermission("manage_whatsapp");
+
   const status = envItems.map((key) => ({
     key,
     configured: Boolean(process.env[key]),

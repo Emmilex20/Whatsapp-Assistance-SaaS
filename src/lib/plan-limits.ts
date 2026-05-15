@@ -5,6 +5,10 @@ export const planLimits = {
     deliveryZones: 3,
     monthlyMessages: 300,
     agents: 1,
+    monthlyAIEvents: 100,
+    monthlyAITokens: 50000,
+    monthlyMediaGenerations: 5,
+    monthlyMediaCostLimit: 1,
   },
   growth: {
     menuItems: 75,
@@ -12,6 +16,10 @@ export const planLimits = {
     deliveryZones: 15,
     monthlyMessages: 2000,
     agents: 3,
+    monthlyAIEvents: 1000,
+    monthlyAITokens: 500000,
+    monthlyMediaGenerations: 50,
+    monthlyMediaCostLimit: 10,
   },
   premium: {
     menuItems: 300,
@@ -19,6 +27,10 @@ export const planLimits = {
     deliveryZones: 50,
     monthlyMessages: 10000,
     agents: 10,
+    monthlyAIEvents: 5000,
+    monthlyAITokens: 2500000,
+    monthlyMediaGenerations: 200,
+    monthlyMediaCostLimit: 40,
   },
 };
 

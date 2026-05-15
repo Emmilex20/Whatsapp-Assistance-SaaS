@@ -1,0 +1,16 @@
+export const securityChecklist = [
+  "Billing page requires owner permission.",
+  "WhatsApp settings require WhatsApp management permission.",
+  "AI settings require AI management permission.",
+  "Team management requires team management permission.",
+  "Campaign/media actions require correct permissions.",
+  "Reports and archives require report permission.",
+  "All server actions verify restaurant ownership.",
+  "Webhook routes do not expose secrets.",
+  "Test WhatsApp send APIs are permission-protected.",
+  "Environment variables are never shown fully in the UI.",
+  "Destructive actions require confirmation.",
+  "AI auto-reply blocks risky complaints/refunds.",
+  "WHATSAPP_SEND_ENABLED remains false until production test passes.",
+  "MEDIA_GENERATION_ENABLED remains false until cost testing passes.",
+];

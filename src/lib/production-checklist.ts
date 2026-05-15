@@ -1,0 +1,17 @@
+export const productionChecklist = [
+  "Production database is connected.",
+  "Prisma schema has been pushed/migrated.",
+  "NEXT_PUBLIC_APP_URL points to the live domain.",
+  "Authentication callback URLs are configured.",
+  "WhatsApp webhook callback URL uses the live domain.",
+  "WHATSAPP_VERIFY_TOKEN matches Meta webhook settings.",
+  "WHATSAPP_SEND_ENABLED is false until real inbound tests pass.",
+  "AI_RESPONSES_ENABLED is false until restaurant data is complete.",
+  "MEDIA_GENERATION_ENABLED is false until Replicate cost testing passes.",
+  "OPENAI_API_KEY is configured only in production environment variables.",
+  "REPLICATE_API_TOKEN is configured only if media generation is enabled.",
+  "Paystack keys/webhooks are configured if subscriptions are active.",
+  "Role permissions have been reviewed.",
+  "Test WhatsApp send APIs are permission-protected.",
+  "Final mobile audit has been completed.",
+];

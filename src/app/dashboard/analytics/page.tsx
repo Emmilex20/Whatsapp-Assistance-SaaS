@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getRestaurantAnalytics } from "@/lib/analytics";
 import { getRestaurantBilling } from "@/lib/billing";
+import { getCampaignAnalytics } from "@/lib/campaign-analytics";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { getResolutionAnalytics } from "@/lib/resolution-analytics";
 import { getSlaAnalytics } from "@/lib/sla-analytics";
@@ -38,6 +39,9 @@ export default async function AnalyticsPage() {
     : null;
   const resolutionAnalytics = restaurant
     ? await getResolutionAnalytics(restaurant.id)
+    : null;
+  const campaignAnalytics = restaurant
+    ? await getCampaignAnalytics(restaurant.id)
     : null;
 
   const stats = [
@@ -124,6 +128,36 @@ export default async function AnalyticsPage() {
           );
         })}
       </section>
+
+      {campaignAnalytics && (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: "Campaigns", value: campaignAnalytics.totalCampaigns },
+            {
+              label: "Active campaigns",
+              value: campaignAnalytics.activeCampaigns,
+            },
+            {
+              label: "Promo inquiries",
+              value: campaignAnalytics.totalInquiries,
+            },
+            {
+              label: "Promo revenue",
+              value: `₦${campaignAnalytics.totalRevenue.toLocaleString()}`,
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-white/10 bg-white/[0.03] p-5"
+            >
+              <p className="text-sm text-zinc-500">{item.label}</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                {item.value}
+              </h2>
+            </div>
+          ))}
+        </section>
+      )}
 
       {slaAnalytics && (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

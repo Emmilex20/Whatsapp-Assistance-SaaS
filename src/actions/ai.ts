@@ -2,6 +2,7 @@
 
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { generateAIReplySuggestion } from "@/lib/ai/reply-engine";
+import { canUseAI } from "@/lib/ai/usage-limits";
 
 export async function generateConversationAISuggestion(formData: FormData) {
   const restaurant = await getOrCreateCurrentRestaurant();
@@ -14,6 +15,14 @@ export async function generateConversationAISuggestion(formData: FormData) {
 
   if (!conversationId) {
     return { error: "Conversation is required." };
+  }
+
+  const aiLimit = await canUseAI(restaurant.id);
+
+  if (!aiLimit.allowed) {
+    return {
+      error: `${aiLimit.reason} Upgrade your plan or wait until next month.`,
+    };
   }
 
   try {

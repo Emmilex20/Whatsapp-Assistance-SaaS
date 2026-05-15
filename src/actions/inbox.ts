@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
+import { checkPermission } from "@/lib/require-permission";
 import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 
 async function getConversationForCurrentRestaurant(conversationId: string) {
@@ -27,6 +28,12 @@ async function getConversationForCurrentRestaurant(conversationId: string) {
 }
 
 export async function enableHumanTakeover(formData: FormData) {
+  const allowed = await checkPermission("manage_inbox");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage inbox.");
+  }
+
   const conversationId = String(formData.get("conversationId") || "");
 
   if (!conversationId) {
@@ -45,6 +52,12 @@ export async function enableHumanTakeover(formData: FormData) {
 }
 
 export async function resumeBotAutomation(formData: FormData) {
+  const allowed = await checkPermission("manage_inbox");
+
+  if (!allowed) {
+    throw new Error("You do not have permission to manage inbox.");
+  }
+
   const conversationId = String(formData.get("conversationId") || "");
 
   if (!conversationId) {
@@ -63,6 +76,12 @@ export async function resumeBotAutomation(formData: FormData) {
 }
 
 export async function sendHumanReply(formData: FormData) {
+  const allowed = await checkPermission("manage_inbox");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage inbox." };
+  }
+
   const restaurant = await getOrCreateCurrentRestaurant();
 
   if (!restaurant) {

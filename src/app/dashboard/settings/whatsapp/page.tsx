@@ -10,9 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WhatsAppTestSendForm } from "@/components/whatsapp/whatsapp-test-send-form";
 import { WhatsAppTemplateTestForm } from "@/components/whatsapp/whatsapp-template-test-form";
+import { requirePermission } from "@/lib/require-permission";
 import { whatsappSetupSteps } from "@/lib/site";
 
-export default function WhatsAppSettingsPage() {
+export default async function WhatsAppSettingsPage() {
+  await requirePermission("manage_whatsapp");
+
   const callbackUrl = "https://serveflow-taupe.vercel.app/api/webhooks/whatsapp";
 
   return (
