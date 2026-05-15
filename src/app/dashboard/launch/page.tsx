@@ -2,9 +2,92 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleDot, Rocket } from "lucide-react";
 import { CreateDemoDataButton } from "@/components/demo/create-demo-data-button";
 import { ResetDemoDataButton } from "@/components/demo/reset-demo-data-button";
-import { launchChecklist } from "@/lib/site";
+import { getEnvStatus } from "@/lib/env";
 
 export default function LaunchPage() {
+  const envStatus = getEnvStatus();
+  const hasEnv = (key: string) =>
+    envStatus.some((item) => item.key === key && item.configured);
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+  const deployed =
+    Boolean(process.env.VERCEL) ||
+    Boolean(appUrl && !appUrl.includes("localhost"));
+  const databaseAndAuthReady =
+    hasEnv("DATABASE_URL") &&
+    hasEnv("CLERK_SECRET_KEY") &&
+    hasEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
+  const whatsappReady =
+    hasEnv("WHATSAPP_VERIFY_TOKEN") &&
+    hasEnv("WHATSAPP_ACCESS_TOKEN") &&
+    hasEnv("WHATSAPP_PHONE_NUMBER_ID") &&
+    hasEnv("WHATSAPP_API_VERSION");
+  const billingReady = hasEnv("PAYSTACK_SECRET_KEY");
+
+  const launchReadinessItems = [
+    {
+      title: "Landing page completed",
+      done: true,
+      detail: "Public site, legal pages, contact page, and product sections exist.",
+    },
+    {
+      title: "Dashboard shell completed",
+      done: true,
+      detail: "Core dashboard navigation, modules, and final check pages are in place.",
+    },
+    {
+      title: "Restaurant onboarding completed",
+      done: true,
+      detail: "Onboarding now reads actual restaurant setup progress.",
+    },
+    {
+      title: "Automation builder completed",
+      done: true,
+      detail: "Automation and FAQ setup pages are available.",
+    },
+    {
+      title: "Inbox UI completed",
+      done: true,
+      detail: "Inbox, manual reply, assignment, and AI suggestion flows exist.",
+    },
+    {
+      title: "Analytics UI completed",
+      done: true,
+      detail: "Dashboard analytics, operations reports, and archives are available.",
+    },
+    {
+      title: "WhatsApp API foundation",
+      done: whatsappReady,
+      detail: whatsappReady
+        ? "WhatsApp environment variables are configured."
+        : "Add WhatsApp token, phone number ID, API version, and verify token.",
+    },
+    {
+      title: "Billing foundation",
+      done: billingReady,
+      detail: billingReady
+        ? "Paystack server key is configured."
+        : "Add Paystack keys before enabling paid subscriptions.",
+    },
+    {
+      title: "Database and auth connection",
+      done: databaseAndAuthReady,
+      detail: databaseAndAuthReady
+        ? "Database and Clerk authentication environment variables are configured."
+        : "Configure DATABASE_URL and Clerk keys.",
+    },
+    {
+      title: "Deploy to Vercel",
+      done: deployed,
+      detail: deployed
+        ? "A live app URL or Vercel environment was detected."
+        : "Deploy and set NEXT_PUBLIC_APP_URL to the live domain.",
+    },
+  ];
+
+  const completedCount = launchReadinessItems.filter((item) => item.done).length;
+  const launchReady = completedCount === launchReadinessItems.length;
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
@@ -27,6 +110,22 @@ export default function LaunchPage() {
           This page tracks what is ready and what still needs to be connected
           before onboarding restaurants publicly.
         </p>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-emerald-100">
+            {completedCount}/{launchReadinessItems.length} launch checks ready
+          </span>
+
+          <span
+            className={`rounded-full px-3 py-1 text-xs ${
+              launchReady
+                ? "bg-emerald-400/10 text-emerald-200"
+                : "bg-yellow-400/10 text-yellow-200"
+            }`}
+          >
+            {launchReady ? "Launch foundation ready" : "Configuration pending"}
+          </span>
+        </div>
       </section>
 
       <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
@@ -109,32 +208,41 @@ export default function LaunchPage() {
           </p>
 
           <div className="mt-5 space-y-3">
-            {launchChecklist.map((item) => {
-              const done = item.status === "Done";
-
+            {launchReadinessItems.map((item) => {
               return (
                 <div
                   key={item.title}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-zinc-900/70 p-4"
+                  className={`flex items-start justify-between gap-3 rounded-2xl border p-4 ${
+                    item.done
+                      ? "border-emerald-400/20 bg-emerald-400/10"
+                      : "border-yellow-400/20 bg-yellow-400/10"
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    {done ? (
+                    {item.done ? (
                       <CheckCircle2 size={18} className="text-emerald-400" />
                     ) : (
                       <CircleDot size={18} className="text-yellow-300" />
                     )}
 
-                    <p className="text-sm text-white">{item.title}</p>
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {item.title}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-zinc-400">
+                        {item.detail}
+                      </p>
+                    </div>
                   </div>
 
                   <span
-                    className={`rounded-full px-3 py-1 text-xs ${
-                      done
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs ${
+                      item.done
                         ? "bg-emerald-400/10 text-emerald-300"
                         : "bg-yellow-400/10 text-yellow-300"
                     }`}
                   >
-                    {item.status}
+                    {item.done ? "Done" : "Next"}
                   </span>
                 </div>
               );
@@ -170,9 +278,9 @@ export default function LaunchPage() {
               Important reminder
             </h2>
             <p className="mt-2 text-sm leading-6 text-yellow-100">
-              The UI is launch-ready visually, but real production still needs
-              auth, database persistence, tenant/business separation, webhook
-              security, and deployment configuration.
+              {launchReady
+                ? "The foundation checks look ready. Before real customers depend on it, still complete the pilot checklist, monitor first messages, and keep AI auto-reply disabled until owner approval."
+                : "Some production checks are still pending. Finish the missing environment, WhatsApp, billing, and deployment items before onboarding a real restaurant."}
             </p>
           </div>
         </div>

@@ -7,15 +7,24 @@ type SetupGuideProps = {
 };
 
 export function SetupGuide({ completed = [] }: SetupGuideProps) {
+  const complete = completed.length >= firstTimeSetupGuide.length;
+
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+    <div
+      className={`rounded-3xl border p-5 ${
+        complete
+          ? "border-emerald-400/20 bg-emerald-400/10"
+          : "border-white/10 bg-white/[0.03]"
+      }`}
+    >
       <div className="mb-5">
         <h2 className="text-base font-semibold text-white">
-          First-time setup guide
+          {complete ? "Setup guide completed" : "First-time setup guide"}
         </h2>
         <p className="mt-1 text-sm leading-6 text-zinc-500">
-          Follow these steps to prepare the assistant for real restaurant
-          customers.
+          {complete
+            ? "Your core restaurant assistant setup is complete. You can now test WhatsApp, review AI safety, and prepare for launch."
+            : "Follow these steps to prepare the assistant for real restaurant customers."}
         </p>
       </div>
 

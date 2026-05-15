@@ -26,8 +26,23 @@ export default async function DashboardPage() {
   const campaignReminders = restaurant
     ? await getCampaignPostReminders(restaurant.id)
     : null;
+  const onboardingComplete = Boolean(
+    overview?.restaurant?.name &&
+      overview.restaurant.name !== "My Restaurant" &&
+      overview.restaurant.whatsappNumber &&
+      overview.restaurant.address &&
+      overview.restaurant.openingTime &&
+      overview.restaurant.closingTime &&
+      overview.stats.menuItems > 0 &&
+      overview.stats.faqs > 0
+  );
   const completedSetupGuide = [
-    overview?.restaurant?.name && overview.restaurant.name !== "My Restaurant"
+    overview?.restaurant?.name &&
+    overview.restaurant.name !== "My Restaurant" &&
+    overview.restaurant.whatsappNumber &&
+    overview.restaurant.address &&
+    overview.restaurant.openingTime &&
+    overview.restaurant.closingTime
       ? "Complete restaurant profile"
       : "",
     overview?.stats.menuItems ? "Add menu items" : "",
@@ -75,12 +90,19 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          <Link href="/dashboard/settings/business">
-            <Button className="h-10 rounded-full bg-white px-5 text-sm text-zinc-950 hover:bg-zinc-200">
-              Complete setup
-              <ArrowRight className="ml-2" size={16} />
-            </Button>
-          </Link>
+          {onboardingComplete ? (
+            <div className="inline-flex h-10 items-center rounded-full border border-emerald-300/30 bg-emerald-400/10 px-5 text-sm font-medium text-emerald-100">
+              <CheckCircle2 className="mr-2" size={16} />
+              Setup complete
+            </div>
+          ) : (
+            <Link href="/dashboard/onboarding">
+              <Button className="h-10 rounded-full bg-white px-5 text-sm text-zinc-950 hover:bg-zinc-200">
+                Complete setup
+                <ArrowRight className="ml-2" size={16} />
+              </Button>
+            </Link>
+          )}
         </div>
       </section>
 
