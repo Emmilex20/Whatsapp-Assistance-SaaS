@@ -9,7 +9,7 @@ export function DashboardTopbar() {
         <div>
           <h1 className="text-base font-semibold text-white">Dashboard</h1>
           <p className="text-xs text-zinc-500">
-            Manage your restaurant assistant
+            Manage your Business assistant
           </p>
         </div>
 

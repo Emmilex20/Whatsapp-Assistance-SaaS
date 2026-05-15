@@ -57,15 +57,15 @@ export default async function OnboardingPage() {
     <div className="space-y-6">
       <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
         <div className="max-w-2xl">
-          <p className="text-sm font-medium text-emerald-400">Restaurant setup</p>
+          <p className="text-sm font-medium text-emerald-400">Business setup</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
             {setupComplete
-              ? "Your WhatsApp restaurant assistant is set up"
-              : "Set up your WhatsApp restaurant assistant"}
+              ? "Your WhatsApp Business assistant is set up"
+              : "Set up your WhatsApp Business assistant"}
           </h1>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
             {setupComplete
-              ? "Core restaurant details are complete. You can now review your dashboard, test WhatsApp, and prepare for real customer usage."
+              ? "Core business details are complete. You can now review your dashboard, test WhatsApp, and prepare for real customer usage."
               : "Add the important business details your assistant will use to answer customers correctly."}
           </p>
         </div>
@@ -80,7 +80,7 @@ export default async function OnboardingPage() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+      <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-base font-semibold text-white">
@@ -104,7 +104,7 @@ export default async function OnboardingPage() {
 
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 transition-all"
+            className="h-full rounded-full bg-linear-to-r from-emerald-400 to-teal-400 transition-all"
             style={{
               width: `${Math.round((completedSteps / stepStates.length) * 100)}%`,
             }}
@@ -125,7 +125,7 @@ export default async function OnboardingPage() {
                   ? "border-emerald-400/20 bg-emerald-400/10 hover:bg-emerald-400/15"
                   : active
                   ? "border-yellow-400/20 bg-yellow-400/10 hover:bg-yellow-400/15"
-                  : "border-white/10 bg-white/3 hover:bg-white/[0.06]"
+                  : "border-white/10 bg-white/3 hover:bg-white/6"
               }`}
             >
               <div className="mb-4 flex items-center justify-between">

@@ -19,17 +19,17 @@ export default function DemoPage() {
           </div>
 
           <p className="text-sm font-medium text-emerald-300">
-            WhatsApp Restaurant Assistant Demo
+            WhatsApp Business Assistant Demo
           </p>
 
           <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight md:text-5xl">
-            Let your restaurant reply faster, send menu, answer delivery
+            Let your business reply faster, send menu, answer delivery
             questions, and collect orders on WhatsApp.
           </h1>
 
           <p className="mt-5 max-w-2xl text-sm leading-7 text-zinc-300 md:text-base">
-            This demo shows how a restaurant assistant can reduce missed
-            messages, reply instantly to customers, and help food vendors manage
+            This demo shows how a business assistant can reduce missed
+            messages, reply instantly to customers, and help businesses manage
             WhatsApp orders.
           </p>
 

@@ -6,7 +6,7 @@ import { companyInfo } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Privacy Policy | ServeFlow",
   description:
-    "Privacy Policy for ServeFlow, a WhatsApp restaurant assistant and operations dashboard.",
+    "Privacy Policy for ServeFlow, a WhatsApp Business assistant and operations dashboard.",
 };
 
 const sections = [
@@ -20,11 +20,11 @@ const sections = [
   },
   {
     title: "WhatsApp and customer data",
-    body: "When a restaurant connects WhatsApp, ServeFlow may process customer names, phone numbers, messages, order details, and related metadata on behalf of that restaurant. Restaurants are responsible for having the right to communicate with their customers.",
+    body: "When a business connects WhatsApp, ServeFlow may process customer names, phone numbers, messages, order details, and related metadata on behalf of that business. Businesses are responsible for having the right to communicate with their customers.",
   },
   {
     title: "AI processing",
-    body: "ServeFlow may use AI providers to generate reply suggestions, captions, reports, and operational summaries when enabled. AI auto-reply should remain disabled until restaurant data and safety checks are reviewed.",
+    body: "ServeFlow may use AI providers to generate reply suggestions, captions, reports, and operational summaries when enabled. AI auto-reply should remain disabled until business data and safety checks are reviewed.",
   },
   {
     title: "Data sharing",
@@ -56,7 +56,7 @@ export default function PrivacyPolicyPage() {
           <p className="mt-4 text-sm leading-6 text-zinc-400">
             Last updated: May 15, 2026. This policy explains how{" "}
             {companyInfo.name} collects, uses, and protects information when
-            restaurants use our WhatsApp restaurant assistant and operations
+            businesses use our WhatsApp Business assistant and operations
             dashboard.
           </p>
         </div>

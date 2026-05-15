@@ -6,17 +6,17 @@ import { companyInfo } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Terms of Service | ServeFlow",
   description:
-    "Terms of Service for ServeFlow, a WhatsApp restaurant assistant and operations dashboard.",
+    "Terms of Service for ServeFlow, a WhatsApp Business assistant and operations dashboard.",
 };
 
 const terms = [
   {
     title: "Use of ServeFlow",
-    body: "ServeFlow provides software tools for restaurants to manage WhatsApp conversations, orders, promotions, staff tasks, and reports. You must use the service lawfully and only for businesses you are authorized to manage.",
+    body: "ServeFlow provides software tools for businesses to manage WhatsApp conversations, orders, promotions, staff tasks, and reports. You must use the service lawfully and only for businesses you are authorized to manage.",
   },
   {
-    title: "Restaurant responsibilities",
-    body: "Restaurants are responsible for the accuracy of menu items, prices, delivery information, policies, team access, WhatsApp configuration, and customer communications sent through the platform.",
+    title: "Business responsibilities",
+    body: "Businesses are responsible for the accuracy of menu items, prices, delivery information, policies, team access, WhatsApp configuration, and customer communications sent through the platform.",
   },
   {
     title: "WhatsApp and third-party services",
@@ -24,7 +24,7 @@ const terms = [
   },
   {
     title: "AI features",
-    body: "AI suggestions and generated content are assistive tools. Restaurants should review AI outputs before sending them to customers, especially for complaints, refunds, medical claims, legal issues, pricing, and delivery promises.",
+    body: "AI suggestions and generated content are assistive tools. Businesses should review AI outputs before sending them to customers, especially for complaints, refunds, medical claims, legal issues, pricing, and delivery promises.",
   },
   {
     title: "Payments and subscriptions",
@@ -55,7 +55,7 @@ export default function TermsPage() {
           </h1>
           <p className="mt-4 text-sm leading-6 text-zinc-400">
             Last updated: May 15, 2026. These terms describe the rules for
-            using {companyInfo.name}, our WhatsApp restaurant assistant and
+            using {companyInfo.name}, our WhatsApp Business assistant and
             operations dashboard.
           </p>
         </div>

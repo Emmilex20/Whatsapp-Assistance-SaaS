@@ -14,7 +14,7 @@ export function SetupGuide({ completed = [] }: SetupGuideProps) {
       className={`rounded-3xl border p-5 ${
         complete
           ? "border-emerald-400/20 bg-emerald-400/10"
-          : "border-white/10 bg-white/[0.03]"
+          : "border-white/10 bg-white/3"
       }`}
     >
       <div className="mb-5">
@@ -23,8 +23,8 @@ export function SetupGuide({ completed = [] }: SetupGuideProps) {
         </h2>
         <p className="mt-1 text-sm leading-6 text-zinc-500">
           {complete
-            ? "Your core restaurant assistant setup is complete. You can now test WhatsApp, review AI safety, and prepare for launch."
-            : "Follow these steps to prepare the assistant for real restaurant customers."}
+            ? "Your core Business assistant setup is complete. You can now test WhatsApp, review AI safety, and prepare for launch."
+            : "Follow these steps to prepare the assistant for real business customers."}
         </p>
       </div>
 

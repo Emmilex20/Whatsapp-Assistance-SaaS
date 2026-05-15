@@ -3,10 +3,73 @@ import { HeroSection } from "@/components/landing/hero-section";
 import { FeaturesSection } from "@/components/landing/features-section";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { Footer } from "@/components/landing/footer";
+import { companyInfo } from "@/lib/company";
+import {
+  absoluteUrl,
+  defaultSeoDescription,
+  seoKeywords,
+  siteUrl,
+} from "@/lib/seo";
 
 export default function Home() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        name: companyInfo.name,
+        legalName: companyInfo.legalName,
+        url: siteUrl,
+        logo: absoluteUrl("/logo.png"),
+        email: companyInfo.email,
+        telephone: companyInfo.phone,
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Lagos",
+          addressCountry: "NG",
+        },
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        url: siteUrl,
+        name: companyInfo.name,
+        description: defaultSeoDescription,
+        publisher: {
+          "@id": `${siteUrl}/#organization`,
+        },
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${siteUrl}/#software`,
+        name: "ServeFlow",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        url: siteUrl,
+        image: absoluteUrl("/logo.png"),
+        description: defaultSeoDescription,
+        keywords: seoKeywords.join(", "),
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "NGN",
+          availability: "https://schema.org/InStock",
+        },
+        publisher: {
+          "@id": `${siteUrl}/#organization`,
+        },
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-zinc-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData),
+        }}
+      />
       <LandingNavbar />
       <HeroSection />
       <FeaturesSection />
@@ -21,13 +84,18 @@ export default function Home() {
               About ServeFlow
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-              WhatsApp operations software for restaurants that sell through
+              WhatsApp operations software for businesses that sell through
               chat.
             </h2>
             <p className="mt-4 text-sm leading-6 text-zinc-400">
-              ServeFlow helps restaurants reply faster, manage customer
+              ServeFlow helps businesses reply faster, manage customer
               conversations, capture orders, prepare promotions, and review
               daily business activity from one dashboard.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-zinc-500">
+              Built for searches like WhatsApp Business assistant, Business
+              WhatsApp automation, AI Business chatbot, and WhatsApp ordering
+              system for food vendors in Nigeria.
             </p>
           </div>
 

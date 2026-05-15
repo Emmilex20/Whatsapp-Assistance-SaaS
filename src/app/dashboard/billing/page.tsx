@@ -36,7 +36,7 @@ export default async function BillingPage() {
           Manage subscription
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-          Choose a plan for the restaurant assistant. Billing is powered by
+          Choose a plan for the Business assistant. Billing is powered by
           Paystack.
         </p>
       </section>

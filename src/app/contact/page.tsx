@@ -7,7 +7,7 @@ import { companyInfo } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Contact | ServeFlow",
   description:
-    "Contact ServeFlow for WhatsApp restaurant assistant pilots, support, and business verification details.",
+    "Contact ServeFlow for WhatsApp Business assistant pilots, support, and business verification details.",
 };
 
 export default function ContactPage() {
@@ -60,12 +60,12 @@ export default function ContactPage() {
               {item.href ? (
                 <a
                   href={item.href}
-                  className="mt-2 block break-words text-sm font-semibold text-white transition hover:text-emerald-300"
+                  className="mt-2 block wrap-break-word text-sm font-semibold text-white transition hover:text-emerald-300"
                 >
                   {item.value}
                 </a>
               ) : (
-                <p className="mt-2 break-words text-sm font-semibold text-white">
+                <p className="mt-2 wrap-break-word text-sm font-semibold text-white">
                   {item.value}
                 </p>
               )}

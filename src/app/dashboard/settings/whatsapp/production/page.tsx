@@ -45,7 +45,7 @@ export default async function WhatsAppProductionPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="rounded-3xl border border-white/10 bg-white/3 p-5">
           <h2 className="text-base font-semibold text-white">
             Required environment variables
           </h2>
@@ -77,7 +77,7 @@ export default async function WhatsAppProductionPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="rounded-3xl border border-white/10 bg-white/3 p-5">
           <h2 className="text-base font-semibold text-white">
             Meta setup steps
           </h2>
@@ -117,7 +117,7 @@ export default async function WhatsAppProductionPage() {
         </p>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+      <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
         <h2 className="text-base font-semibold text-white">
           Recommended Meta templates
         </h2>
@@ -146,7 +146,7 @@ export default async function WhatsAppProductionPage() {
             {
               name: "follow_up_demo",
               category: "Marketing or Utility",
-              body: "Hi {{1}}, thanks for checking out ServeFlow. Would you like us to help set up your WhatsApp restaurant assistant this week?",
+              body: "Hi {{1}}, thanks for checking out ServeFlow. Would you like us to help set up your WhatsApp Business assistant this week?",
             },
           ].map((template) => (
             <div
@@ -167,7 +167,7 @@ export default async function WhatsAppProductionPage() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+      <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
         <h2 className="text-base font-semibold text-white">
           Real customer testing checklist
         </h2>
