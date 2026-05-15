@@ -32,9 +32,10 @@ export const appName = "ServeFlow";
 
 export const navLinks = [
   { label: "Features", href: "#features" },
+  { label: "About", href: "#about" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export const dashboardLinks = [
