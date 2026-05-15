@@ -3,6 +3,8 @@ import { Edit3, Plus, Trash2 } from "lucide-react";
 import { deleteFAQ } from "@/actions/restaurant";
 import { Button } from "@/components/ui/button";
 import { CreateFAQForm } from "@/components/faqs/create-faq-form";
+import { CreateRecommendedFAQsButton } from "@/components/faqs/create-recommended-faqs-button";
+import { recommendedFAQPresets } from "@/lib/faq-presets";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
 
@@ -39,7 +41,44 @@ export default async function FaqsPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.75fr_1.25fr]">
-        <CreateFAQForm />
+        <div className="space-y-4">
+          <CreateFAQForm />
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-base font-semibold text-white">
+              Recommended FAQs
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-zinc-500">
+              Save common restaurant FAQs for delivery, menu, payment, orders,
+              support, and promos.
+            </p>
+
+            <div className="mt-5">
+              <CreateRecommendedFAQsButton />
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {recommendedFAQPresets.map((preset) => (
+                <div
+                  key={preset.question}
+                  className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-medium text-white">
+                      {preset.question}
+                    </p>
+                    <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-300">
+                      {preset.category}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">
+                    {preset.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/3 p-5">
           <h2 className="text-base font-semibold text-white">Saved FAQs</h2>

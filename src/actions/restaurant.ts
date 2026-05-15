@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { recommendedAutomationPresets } from "@/lib/automation-presets";
+import { recommendedFAQPresets } from "@/lib/faq-presets";
 import { getRestaurantUsage, isAtLimit } from "@/lib/usage";
 
 export async function updateRestaurantProfile(formData: FormData) {
@@ -157,6 +159,51 @@ export async function createFAQ(formData: FormData) {
   return { success: "FAQ added successfully." };
 }
 
+export async function createRecommendedFAQs() {
+  const restaurant = await getOrCreateCurrentRestaurant();
+
+  if (!restaurant) {
+    return { error: "Restaurant not found." };
+  }
+
+  const existingFAQs = await prisma.fAQ.findMany({
+    where: { restaurantId: restaurant.id },
+    select: { question: true },
+  });
+
+  const existingQuestions = new Set(
+    existingFAQs.map((faq) => faq.question.toLowerCase())
+  );
+
+  const presetsToCreate = recommendedFAQPresets.filter(
+    (preset) => !existingQuestions.has(preset.question.toLowerCase())
+  );
+
+  if (presetsToCreate.length === 0) {
+    return {
+      success: "Recommended FAQs already exist.",
+    };
+  }
+
+  await prisma.fAQ.createMany({
+    data: presetsToCreate.map((preset) => ({
+      restaurantId: restaurant.id,
+      question: preset.question,
+      answer: preset.answer,
+    })),
+  });
+
+  revalidatePath("/dashboard/automations/faqs");
+  revalidatePath("/dashboard/onboarding");
+  revalidatePath("/dashboard");
+
+  return {
+    success: `${presetsToCreate.length} recommended FAQ${
+      presetsToCreate.length === 1 ? "" : "s"
+    } saved.`,
+  };
+}
+
 export async function updateFAQ(formData: FormData) {
   const restaurant = await getOrCreateCurrentRestaurant();
   const id = String(formData.get("id") || "");
@@ -250,6 +297,65 @@ export async function createAutomation(formData: FormData) {
 
   return {
     success: "Automation created successfully.",
+  };
+}
+
+export async function createRecommendedAutomations() {
+  const restaurant = await getOrCreateCurrentRestaurant();
+
+  if (!restaurant) {
+    return { error: "Restaurant not found." };
+  }
+
+  const usage = await getRestaurantUsage(restaurant.id);
+  const remainingSlots = Math.max(
+    usage.limits.automations - usage.usage.automations,
+    0
+  );
+
+  if (remainingSlots === 0) {
+    return {
+      error: "Automation limit reached. Upgrade your plan to add more rules.",
+    };
+  }
+
+  const existingAutomations = await prisma.automation.findMany({
+    where: { restaurantId: restaurant.id },
+    select: { name: true },
+  });
+
+  const existingNames = new Set(
+    existingAutomations.map((automation) => automation.name.toLowerCase())
+  );
+
+  const presetsToCreate = recommendedAutomationPresets
+    .filter((preset) => !existingNames.has(preset.name.toLowerCase()))
+    .slice(0, remainingSlots);
+
+  if (presetsToCreate.length === 0) {
+    return {
+      success: "Recommended automations already exist.",
+    };
+  }
+
+  await prisma.automation.createMany({
+    data: presetsToCreate.map((preset) => ({
+      restaurantId: restaurant.id,
+      name: preset.name,
+      triggers: preset.triggers.map((trigger) => trigger.toLowerCase()),
+      response: preset.response,
+      status: "ACTIVE",
+    })),
+  });
+
+  revalidatePath("/dashboard/automations");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/onboarding");
+
+  return {
+    success: `${presetsToCreate.length} recommended automation${
+      presetsToCreate.length === 1 ? "" : "s"
+    } saved.`,
   };
 }
 

@@ -6,6 +6,7 @@ import {
   saveIncomingCustomerMessage,
 } from "@/lib/conversations";
 import { buildDeliveryReply, isDeliveryRequest } from "@/lib/delivery-reply";
+import { matchFAQ } from "@/lib/faq-matcher";
 import { buildMenuReply, isMenuRequest } from "@/lib/menu-reply";
 import { prisma } from "@/lib/prisma";
 import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
@@ -171,6 +172,25 @@ export async function POST(request: NextRequest) {
     }
 
     if (conversation.status === "HUMAN_TAKEOVER") {
+      return NextResponse.json({ received: true });
+    }
+
+    const faq = await matchFAQ({
+      restaurantId: restaurant.id,
+      message: text,
+    });
+
+    if (faq) {
+      await safeSendWhatsAppText({
+        to: from,
+        message: faq.answer,
+      });
+
+      await saveBotMessage({
+        conversationId: conversation.id,
+        message: faq.answer,
+      });
+
       return NextResponse.json({ received: true });
     }
 

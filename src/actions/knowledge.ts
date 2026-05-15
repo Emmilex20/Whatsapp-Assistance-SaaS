@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { recommendedKnowledgePresets } from "@/lib/knowledge-presets";
 import { checkPermission } from "@/lib/require-permission";
 
 export async function createKnowledgeBaseItem(formData: FormData) {
@@ -38,6 +39,59 @@ export async function createKnowledgeBaseItem(formData: FormData) {
   revalidatePath("/dashboard/knowledge");
 
   return { success: "Knowledge item added." };
+}
+
+export async function createRecommendedKnowledgeBaseItems() {
+  const allowed = await checkPermission("manage_ai");
+
+  if (!allowed) {
+    return { error: "You do not have permission to manage AI knowledge." };
+  }
+
+  const restaurant = await getOrCreateCurrentRestaurant();
+
+  if (!restaurant) {
+    return { error: "Restaurant not found." };
+  }
+
+  const existingItems = await prisma.knowledgeBaseItem.findMany({
+    where: { restaurantId: restaurant.id },
+    select: { title: true },
+  });
+
+  const existingTitles = new Set(
+    existingItems.map((item) => item.title.toLowerCase())
+  );
+
+  const presetsToCreate = recommendedKnowledgePresets.filter(
+    (preset) => !existingTitles.has(preset.title.toLowerCase())
+  );
+
+  if (presetsToCreate.length === 0) {
+    return {
+      success: "Recommended knowledge already exists.",
+    };
+  }
+
+  await prisma.knowledgeBaseItem.createMany({
+    data: presetsToCreate.map((preset) => ({
+      restaurantId: restaurant.id,
+      title: preset.title,
+      content: preset.content,
+      category: preset.category,
+      active: true,
+    })),
+  });
+
+  revalidatePath("/dashboard/knowledge");
+  revalidatePath("/dashboard/settings/ai/context");
+  revalidatePath("/dashboard/final-check/pilot-launch");
+
+  return {
+    success: `${presetsToCreate.length} recommended knowledge item${
+      presetsToCreate.length === 1 ? "" : "s"
+    } saved.`,
+  };
 }
 
 export async function deleteKnowledgeBaseItem(formData: FormData) {

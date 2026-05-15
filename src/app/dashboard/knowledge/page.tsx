@@ -4,8 +4,10 @@ import {
   toggleKnowledgeBaseItem,
 } from "@/actions/knowledge";
 import { CreateKnowledgeForm } from "@/components/knowledge/create-knowledge-form";
+import { CreateRecommendedKnowledgeButton } from "@/components/knowledge/create-recommended-knowledge-button";
 import { Button } from "@/components/ui/button";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { recommendedKnowledgePresets } from "@/lib/knowledge-presets";
 import { prisma } from "@/lib/prisma";
 
 export default async function KnowledgePage() {
@@ -34,7 +36,44 @@ export default async function KnowledgePage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
-        <CreateKnowledgeForm />
+        <div className="space-y-4">
+          <CreateKnowledgeForm />
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-base font-semibold text-white">
+              Recommended restaurant knowledge
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-zinc-500">
+              Save common policies and operating rules so AI suggestions know
+              how the restaurant should behave.
+            </p>
+
+            <div className="mt-5">
+              <CreateRecommendedKnowledgeButton />
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {recommendedKnowledgePresets.map((preset) => (
+                <div
+                  key={preset.title}
+                  className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-semibold text-white">
+                      {preset.title}
+                    </h3>
+                    <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-300">
+                      {preset.category}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">
+                    {preset.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
           <h2 className="text-base font-semibold text-white">

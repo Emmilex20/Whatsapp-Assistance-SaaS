@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { findBestIntentMatch } from "@/lib/customer-intent";
 
 type MatchAutomationParams = {
   restaurantId: string;
@@ -9,8 +10,6 @@ export async function matchAutomation({
   restaurantId,
   message,
 }: MatchAutomationParams) {
-  const normalizedMessage = message.toLowerCase();
-
   const automations = await prisma.automation.findMany({
     where: {
       restaurantId,
@@ -21,10 +20,15 @@ export async function matchAutomation({
     },
   });
 
-  const matchedAutomation = automations.find((automation) => {
-    return automation.triggers.some((trigger) =>
-      normalizedMessage.includes(trigger.toLowerCase())
-    );
+  const matchedAutomation = findBestIntentMatch({
+    message,
+    items: automations,
+    getPhrases: (automation) => [
+      automation.name,
+      ...automation.triggers,
+      automation.response,
+    ],
+    minimumScore: 0.52,
   });
 
   if (!matchedAutomation) {

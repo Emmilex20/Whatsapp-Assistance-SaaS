@@ -10,12 +10,13 @@ import {
   Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CreateRecommendedAutomationsButton } from "@/components/automations/create-recommended-automations-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   deleteAutomation,
   toggleAutomationStatus,
 } from "@/actions/restaurant";
-import { automationTemplates } from "@/lib/site";
+import { recommendedAutomationPresets } from "@/lib/automation-presets";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 
@@ -209,32 +210,35 @@ export default async function AutomationsPage() {
             Quick templates
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Start from common restaurant automations.
+            Save practical restaurant automations without typing each reply.
           </p>
 
+          <div className="mt-5">
+            <CreateRecommendedAutomationsButton />
+          </div>
+
           <div className="mt-5 space-y-3">
-            {automationTemplates.map((template) => (
-              <Link
-                href="/dashboard/automations/new"
-                key={template.title}
-                className="block rounded-2xl border border-white/10 bg-zinc-900/70 p-4 transition hover:bg-zinc-800"
+            {recommendedAutomationPresets.map((template) => (
+              <div
+                key={template.name}
+                className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-white">
-                      {template.title}
+                      {template.name}
                     </p>
                     <p className="mt-1 text-xs text-emerald-400">
-                      Trigger: {template.trigger}
+                      {template.category} · {template.triggers.slice(0, 3).join(", ")}
                     </p>
                   </div>
-                  <ArrowRight size={16} className="text-zinc-500" />
+                  <ArrowRight size={16} className="shrink-0 text-zinc-500" />
                 </div>
 
                 <p className="mt-2 text-sm leading-6 text-zinc-400">
                   {template.response}
                 </p>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
