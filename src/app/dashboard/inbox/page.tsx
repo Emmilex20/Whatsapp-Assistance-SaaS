@@ -701,6 +701,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                               confidence:
                                 chat.voiceTranscription.confidence,
                               status: chat.voiceTranscription.status,
+                              error: chat.voiceTranscription.error,
                               mimeType: chat.voiceTranscription.mimeType,
                               audioSize: chat.voiceTranscription.audioSize,
                               audioAvailable: Boolean(

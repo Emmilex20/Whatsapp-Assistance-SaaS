@@ -13,6 +13,7 @@ type VoiceTranscriptionCardProps = {
     correctedText: string | null;
     confidence: number;
     status: string;
+    error: string | null;
     mimeType: string | null;
     audioSize: number;
     audioAvailable: boolean;
@@ -92,6 +93,12 @@ export function VoiceTranscriptionCard({
           </span>
         )}
       </div>
+
+      {transcription.error && (
+        <p className="mt-3 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-xs leading-5 text-red-100">
+          {transcription.error}
+        </p>
+      )}
 
       {transcription.audioAvailable ? (
         <audio

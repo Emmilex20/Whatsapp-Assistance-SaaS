@@ -53,6 +53,23 @@ function extensionFromMimeType(mimeType?: string | null) {
   return "ogg";
 }
 
+function readableError(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
+function isAuthLikeError(message: string) {
+  const normalized = message.toLowerCase();
+
+  return (
+    normalized.includes("auth") ||
+    normalized.includes("401") ||
+    normalized.includes("403") ||
+    normalized.includes("unauthorized") ||
+    normalized.includes("forbidden") ||
+    normalized.includes("invalid token")
+  );
+}
+
 export function voiceTranscriptionEnabled() {
   return process.env.VOICE_TRANSCRIPTION_ENABLED === "true";
 }
@@ -94,7 +111,15 @@ export async function downloadWhatsAppAudio({
   const metadata = await metadataResponse.json();
 
   if (!metadataResponse.ok) {
-    throw new Error(metadata?.error?.message || "Could not read audio media.");
+    const message = metadata?.error?.message || "Could not read audio media.";
+
+    if (metadataResponse.status === 401 || metadataResponse.status === 403) {
+      throw new Error(
+        "WhatsApp media authentication failed. Refresh WHATSAPP_ACCESS_TOKEN in Vercel and confirm it has permission to read WhatsApp media."
+      );
+    }
+
+    throw new Error(`WhatsApp media download failed: ${message}`);
   }
 
   const mediaUrl = String(metadata.url || "");
@@ -116,6 +141,12 @@ export async function downloadWhatsAppAudio({
   });
 
   if (!audioResponse.ok) {
+    if (audioResponse.status === 401 || audioResponse.status === 403) {
+      throw new Error(
+        "WhatsApp audio download authentication failed. Refresh WHATSAPP_ACCESS_TOKEN in Vercel."
+      );
+    }
+
     throw new Error("Could not download WhatsApp audio.");
   }
 
@@ -143,15 +174,29 @@ export async function transcribeAudio({ audio, mimeType }: TranscribeAudioParams
     }
   );
 
-  const response = await client.audio.transcriptions.create({
-    file,
-    model,
-    language: "en",
-    prompt:
-      "Transcribe restaurant customer WhatsApp voice notes. The speaker may use English, Nigerian Pidgin, Nigerian names, food names, addresses, and casual ordering phrases.",
-    response_format: "json",
-    include: ["logprobs"],
-  });
+  let response;
+
+  try {
+    response = await client.audio.transcriptions.create({
+      file,
+      model,
+      language: "en",
+      prompt:
+        "Transcribe restaurant customer WhatsApp voice notes. The speaker may use English, Nigerian Pidgin, Nigerian names, food names, addresses, and casual ordering phrases.",
+      response_format: "json",
+      include: ["logprobs"],
+    });
+  } catch (error) {
+    const message = readableError(error);
+
+    if (isAuthLikeError(message)) {
+      throw new Error(
+        "OpenAI transcription authentication failed. Check OPENAI_API_KEY in Vercel and redeploy."
+      );
+    }
+
+    throw error;
+  }
 
   const result = response as {
     text?: string;
@@ -315,8 +360,7 @@ export async function processIncomingVoiceNote({
       reason: "",
     };
   } catch (error) {
-    const reason =
-      error instanceof Error ? error.message : "Voice transcription failed.";
+    const reason = readableError(error) || "Voice transcription failed.";
     const message = await saveVoiceSystemMessage({
       conversationId: conversation.id,
       content: `Voice note received. Transcription failed: ${reason}`,
