@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { extractCustomerPreferences } from "@/lib/ai/customer-preference-extractor";
 
 type SaveIncomingMessageParams = {
   restaurantId: string;
@@ -43,6 +44,14 @@ export async function saveIncomingCustomerMessage({
       senderType: "CUSTOMER",
       content: message,
     },
+  });
+
+  extractCustomerPreferences({
+    restaurantId,
+    customerPhone,
+    message,
+  }).catch((error) => {
+    console.warn("Customer preference extraction skipped:", error);
   });
 
   return conversation;

@@ -6,6 +6,7 @@ import {
   CircleAlert,
 } from "lucide-react";
 import { AIAutoReplyToggle } from "@/components/ai/ai-auto-reply-toggle";
+import { AIUpsellToggle } from "@/components/ai/ai-upsell-toggle";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { requirePermission } from "@/lib/require-permission";
 
@@ -28,6 +29,11 @@ export default async function AISettingsPage() {
       key: "AI_RESPONSES_ENABLED",
       configured: Boolean(process.env.AI_RESPONSES_ENABLED),
       value: process.env.AI_RESPONSES_ENABLED || "false",
+    },
+    {
+      key: "AI_UPSELLS_ENABLED",
+      configured: Boolean(process.env.AI_UPSELLS_ENABLED),
+      value: process.env.AI_UPSELLS_ENABLED || "false",
     },
     {
       key: "AI_MODEL",
@@ -82,6 +88,13 @@ export default async function AISettingsPage() {
         <AIAutoReplyToggle enabled={restaurant.aiAutoReplyEnabled} />
       )}
 
+      {restaurant && (
+        <AIUpsellToggle
+          enabled={restaurant.aiUpsellsEnabled}
+          envEnabled={process.env.AI_UPSELLS_ENABLED === "true"}
+        />
+      )}
+
       <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -100,6 +113,28 @@ export default async function AISettingsPage() {
             className="inline-flex h-10 items-center rounded-full bg-emerald-500 px-5 text-sm font-medium text-white hover:bg-emerald-400"
           >
             View AI usage
+            <ArrowRight className="ml-2" size={16} />
+          </Link>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-white">
+              AI upsell rules
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              Create short add-on suggestions for combos, drinks, sides, and
+              repeat order opportunities.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/ai/upsells"
+            className="inline-flex h-10 items-center rounded-full bg-white/[0.06] px-5 text-sm font-medium text-white hover:bg-white/10"
+          >
+            Manage upsells
             <ArrowRight className="ml-2" size={16} />
           </Link>
         </div>

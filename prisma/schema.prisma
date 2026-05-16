@@ -117,6 +117,7 @@ model Restaurant {
   brandLogoUrl          String?
   brandVisualStyle      String?
   aiAutoReplyEnabled    Boolean  @default(false)
+  aiUpsellsEnabled      Boolean  @default(false)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -131,11 +132,14 @@ model Restaurant {
   pilotClients  PilotClient[]
   teamMembers   TeamMember[]
   knowledgeBaseItems KnowledgeBaseItem[]
+  customerMemories CustomerMemory[]
   aiUsageLogs AIUsageLog[]
   mediaGenerations MediaGeneration[]
   promoCampaigns PromoCampaign[]
   reportArchives ReportArchive[]
   socialAccounts SocialAccount[]
+  upsellRules UpsellRule[]
+  upsellAttempts UpsellAttempt[]
 }
 
 model MenuItem {
@@ -289,6 +293,66 @@ model KnowledgeBaseItem {
   updatedAt    DateTime @updatedAt
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model CustomerMemory {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  customerPhone String
+  key           String
+  value         String
+  confidence    Int      @default(70)
+  source        String
+  reviewStatus  String   @default("APPROVED")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, customerPhone])
+  @@index([restaurantId, active])
+  @@index([restaurantId, reviewStatus])
+}
+
+model UpsellRule {
+  id               String   @id @default(cuid())
+  restaurantId     String
+  triggerItem      String
+  suggestedItem    String
+  message          String
+  active           Boolean  @default(true)
+  attempts         Int      @default(0)
+  acceptedUpsells  Int      @default(0)
+  revenueGenerated Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  upsellAttempts UpsellAttempt[]
+
+  @@index([restaurantId, active])
+}
+
+model UpsellAttempt {
+  id               String    @id @default(cuid())
+  restaurantId     String
+  upsellRuleId     String
+  conversationId   String?
+  customerPhone    String
+  triggerItem      String
+  suggestedItem    String
+  accepted         Boolean   @default(false)
+  revenueGenerated Int       @default(0)
+  createdAt        DateTime  @default(now())
+  acceptedAt       DateTime?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  upsellRule UpsellRule @relation(fields: [upsellRuleId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, customerPhone])
+  @@index([restaurantId, conversationId])
+  @@index([upsellRuleId, createdAt])
 }
 
 model WebhookEvent {

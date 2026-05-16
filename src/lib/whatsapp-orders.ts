@@ -1,4 +1,6 @@
 import { isLikelyAddress } from "@/lib/address-intent";
+import { extractCustomerPreferences } from "@/lib/ai/customer-preference-extractor";
+import { trackAcceptedUpsells } from "@/lib/ai/upsell-engine";
 import { findMatchingDeliveryZone } from "@/lib/delivery-fee";
 import { extractSimpleOrderItem, isOrderIntent } from "@/lib/order-intent";
 import { prisma } from "@/lib/prisma";
@@ -70,6 +72,18 @@ export async function handleWhatsAppOrder({
       const orderItems = updatedOrder.items
         .map((item) => `${item.quantity}x ${item.name}`)
         .join(", ");
+
+      extractCustomerPreferences({
+        restaurantId,
+        customerPhone,
+        order: {
+          itemNames: updatedOrder.items.map((item) => item.name),
+          deliveryAddress: updatedOrder.deliveryAddress,
+          notes: updatedOrder.notes,
+        },
+      }).catch((error) => {
+        console.warn("Customer preference extraction skipped:", error);
+      });
 
       return {
         order: updatedOrder,
@@ -145,6 +159,32 @@ A staff member will confirm your order shortly.`,
     include: {
       items: true,
     },
+  });
+
+  extractCustomerPreferences({
+    restaurantId,
+    customerPhone,
+    message,
+    order: {
+      itemNames: order.items.map((item) => item.name),
+      deliveryAddress: order.deliveryAddress,
+      notes: order.notes,
+    },
+  }).catch((error) => {
+    console.warn("Customer preference extraction skipped:", error);
+  });
+
+  trackAcceptedUpsells({
+    restaurantId,
+    conversationId,
+    customerPhone,
+    orderItems: order.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+    })),
+  }).catch((error) => {
+    console.warn("Upsell acceptance tracking skipped:", error);
   });
 
   return {

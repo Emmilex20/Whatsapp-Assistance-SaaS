@@ -3,6 +3,7 @@ import { findPossibleDeliveryZoneMatches } from "@/lib/ai/delivery-match";
 import { findPossibleMenuMatches } from "@/lib/ai/menu-match";
 import { getAITextProvider } from "@/lib/ai/providers";
 import { buildRestaurantAIContext } from "@/lib/ai/restaurant-context";
+import { buildUpsellSuggestion } from "@/lib/ai/upsell-engine";
 import { logAIUsage } from "@/lib/ai/usage-log";
 import { prisma } from "@/lib/prisma";
 
@@ -81,7 +82,10 @@ export async function generateAIReplySuggestion({
     },
   });
 
-  const context = await buildRestaurantAIContext(restaurantId);
+  const context = await buildRestaurantAIContext(
+    restaurantId,
+    conversation.customerPhone
+  );
 
   const messageHistory = conversation.messages
     .map((message) => `${message.senderType}: ${message.content}`)
@@ -129,6 +133,9 @@ ${
 
   const activeOrders = conversation.orders.filter((order) =>
     ["NEW", "CONFIRMED", "PREPARING", "READY"].includes(order.status)
+  );
+  const activeOrderItemNames = activeOrders.flatMap((order) =>
+    order.items.map((item) => item.name)
   );
 
   const activeOrderContext = activeOrders.length
@@ -234,7 +241,16 @@ Write the best next WhatsApp reply.
     input,
   });
 
-  const suggestion = result.text || "No suggestion generated.";
+  const upsellSuggestion = await buildUpsellSuggestion({
+    restaurantId,
+    conversationId,
+    customerPhone: conversation.customerPhone,
+    latestCustomerMessage,
+    activeOrderItemNames,
+  });
+  const suggestion = upsellSuggestion?.message
+    ? `${result.text || "No suggestion generated."}\n\n${upsellSuggestion.message}`
+    : result.text || "No suggestion generated.";
 
   await logAIUsage({
     restaurantId,

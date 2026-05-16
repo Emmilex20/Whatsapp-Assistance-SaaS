@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import type { OrderStatus } from "@/generated/prisma/client";
+import { extractCustomerPreferences } from "@/lib/ai/customer-preference-extractor";
+import { trackAcceptedUpsells } from "@/lib/ai/upsell-engine";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { findMatchingDeliveryZone } from "@/lib/delivery-fee";
 import { getOrderStatusMessage } from "@/lib/order-status-message";
@@ -61,7 +63,7 @@ export async function createManualOrder(formData: FormData) {
   const deliveryFee = matchedZone?.fee || 0;
   const totalAmount = itemsSubtotal + deliveryFee;
 
-  await prisma.order.create({
+  const order = await prisma.order.create({
     data: {
       restaurantId: restaurant.id,
       customerName,
@@ -79,6 +81,34 @@ export async function createManualOrder(formData: FormData) {
         },
       },
     },
+    include: {
+      items: true,
+    },
+  });
+
+  extractCustomerPreferences({
+    restaurantId: restaurant.id,
+    customerPhone,
+    order: {
+      itemNames: order.items.map((item) => item.name),
+      deliveryAddress: order.deliveryAddress,
+      notes: order.notes,
+    },
+  }).catch((error) => {
+    console.warn("Customer preference extraction skipped:", error);
+  });
+
+  trackAcceptedUpsells({
+    restaurantId: restaurant.id,
+    conversationId: order.conversationId,
+    customerPhone,
+    orderItems: order.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+    })),
+  }).catch((error) => {
+    console.warn("Upsell acceptance tracking skipped:", error);
   });
 
   revalidatePath("/dashboard/orders");

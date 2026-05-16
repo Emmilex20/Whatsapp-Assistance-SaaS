@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
-export async function buildRestaurantAIContext(restaurantId: string) {
+export async function buildRestaurantAIContext(
+  restaurantId: string,
+  customerPhone?: string
+) {
   const [
     restaurant,
     menuItems,
@@ -8,6 +11,7 @@ export async function buildRestaurantAIContext(restaurantId: string) {
     faqs,
     automations,
     knowledgeItems,
+    customerMemories,
   ] = await Promise.all([
       prisma.restaurant.findUnique({
         where: { id: restaurantId },
@@ -51,6 +55,17 @@ export async function buildRestaurantAIContext(restaurantId: string) {
         },
         orderBy: { updatedAt: "desc" },
         take: 30,
+      }),
+
+      prisma.customerMemory.findMany({
+        where: {
+          restaurantId,
+          active: true,
+          reviewStatus: "APPROVED",
+          ...(customerPhone ? { customerPhone } : {}),
+        },
+        orderBy: [{ confidence: "desc" }, { updatedAt: "desc" }],
+        take: customerPhone ? 20 : 50,
       }),
     ]);
 
@@ -100,6 +115,17 @@ export async function buildRestaurantAIContext(restaurantId: string) {
         .join("\n\n")
     : "No custom knowledge saved.";
 
+  const customerMemoryText = customerMemories.length
+    ? customerMemories
+        .map(
+          (memory) =>
+            `Customer phone: ${memory.customerPhone}\nMemory: ${memory.key}\nValue: ${memory.value}\nConfidence: ${memory.confidence}%\nSource: ${memory.source}`
+        )
+        .join("\n\n")
+    : customerPhone
+      ? "No active customer memories saved for this customer."
+      : "No active customer memories saved.";
+
   return `
 Restaurant:
 Name: ${restaurant?.name || "Restaurant"}
@@ -131,5 +157,8 @@ ${automationText}
 
 Custom knowledge:
 ${knowledgeText}
+
+Customer memories:
+${customerMemoryText}
 `.trim();
 }
