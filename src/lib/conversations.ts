@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { extractCustomerPreferences } from "@/lib/ai/customer-preference-extractor";
+import { detectAndEscalateComplaint } from "@/lib/complaint-detector";
 
 type SaveIncomingMessageParams = {
   restaurantId: string;
@@ -54,7 +55,19 @@ export async function saveIncomingCustomerMessage({
     console.warn("Customer preference extraction skipped:", error);
   });
 
-  return conversation;
+  const alert = await detectAndEscalateComplaint({
+    restaurantId,
+    conversationId: conversation.id,
+    message,
+  });
+
+  if (!alert) return conversation;
+
+  return prisma.conversation.findUniqueOrThrow({
+    where: {
+      id: conversation.id,
+    },
+  });
 }
 
 export async function saveBotMessage({

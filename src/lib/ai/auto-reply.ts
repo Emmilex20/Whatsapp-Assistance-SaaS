@@ -5,6 +5,7 @@ import {
 import { getBlockedAIReason } from "@/lib/ai/safety";
 import { logAIUsage } from "@/lib/ai/usage-log";
 import { canUseAI } from "@/lib/ai/usage-limits";
+import { hasUnresolvedComplaint } from "@/lib/complaint-detector";
 
 type GenerateAIAutoReplyParams = {
   restaurantId: string;
@@ -17,6 +18,27 @@ export async function generateAIAutoReply({
   conversationId,
   latestCustomerMessage,
 }: GenerateAIAutoReplyParams) {
+  const unresolvedComplaint = await hasUnresolvedComplaint(conversationId);
+
+  if (unresolvedComplaint) {
+    const reason = `Unresolved ${unresolvedComplaint.severity} complaint: ${unresolvedComplaint.reason}`;
+
+    await logAIUsage({
+      restaurantId,
+      conversationId,
+      eventType: "BLOCKED_AUTO_REPLY",
+      model: getAIModelLogName(),
+      inputPreview: latestCustomerMessage,
+      blockedReason: reason,
+    });
+
+    return {
+      blocked: true,
+      reason,
+      reply: "",
+    };
+  }
+
   const blockReason = getBlockedAIReason(latestCustomerMessage);
 
   if (blockReason) {

@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (activeOrder) {
+    if (conversation.status !== "HUMAN_TAKEOVER" && activeOrder) {
       const orderResult = await handleWhatsAppOrder({
         restaurantId: restaurant.id,
         conversationId: conversation.id,
@@ -160,26 +160,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const orderResult = await handleWhatsAppOrder({
-      restaurantId: restaurant.id,
-      conversationId: conversation.id,
-      customerName: contactName,
-      customerPhone: from,
-      message: text,
-    });
-
-    if (orderResult) {
-      await safeSendWhatsAppText({
-        to: from,
-        message: orderResult.reply,
-      });
-
-      await saveBotMessage({
+    if (conversation.status !== "HUMAN_TAKEOVER") {
+      const orderResult = await handleWhatsAppOrder({
+        restaurantId: restaurant.id,
         conversationId: conversation.id,
-        message: orderResult.reply,
+        customerName: contactName,
+        customerPhone: from,
+        message: text,
       });
 
-      return NextResponse.json({ received: true });
+      if (orderResult) {
+        await safeSendWhatsAppText({
+          to: from,
+          message: orderResult.reply,
+        });
+
+        await saveBotMessage({
+          conversationId: conversation.id,
+          message: orderResult.reply,
+        });
+
+        return NextResponse.json({ received: true });
+      }
     }
 
     if (conversation.status === "HUMAN_TAKEOVER") {
