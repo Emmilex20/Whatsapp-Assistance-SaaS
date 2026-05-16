@@ -137,6 +137,7 @@ model Restaurant {
   mediaGenerations MediaGeneration[]
   promoCampaigns PromoCampaign[]
   reportArchives ReportArchive[]
+  businessInsights BusinessInsight[]
   socialAccounts SocialAccount[]
   upsellRules UpsellRule[]
   upsellAttempts UpsellAttempt[]
@@ -520,6 +521,26 @@ model ReportArchive {
   createdAt     DateTime          @default(now())
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model BusinessInsight {
+  id             String   @id @default(cuid())
+  restaurantId   String
+  period         String
+  category       String
+  title          String
+  summary        String
+  recommendation String
+  metricLabel    String?
+  metricValue    String?
+  priority       String   @default("medium")
+  createdAt      DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, period])
+  @@index([restaurantId, category])
+  @@index([restaurantId, createdAt])
 }
 
 model PilotClient {
