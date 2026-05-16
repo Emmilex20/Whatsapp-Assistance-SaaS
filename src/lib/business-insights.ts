@@ -16,7 +16,7 @@ export type GeneratedBusinessInsight = {
   summary: string;
   recommendation: string;
   metricLabel?: string;
-  metricValue?: string;
+  metricValue?: string | number;
   priority: BusinessInsightPriority;
 };
 
