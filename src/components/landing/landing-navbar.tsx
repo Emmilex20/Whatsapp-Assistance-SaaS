@@ -22,6 +22,16 @@ export function LandingNavbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link href="/dashboard/settings/whatsapp" className="hidden sm:block">
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full border-emerald-400/20 bg-emerald-400/10 px-4 text-sm text-emerald-200 hover:bg-emerald-400/20"
+            >
+              Connect WhatsApp
+            </Button>
+          </Link>
+
           <Link href="/dashboard">
             <Button
               size="sm"

@@ -183,6 +183,7 @@ export async function updateOrderStatus(formData: FormData) {
   }
 
   await safeSendWhatsAppText({
+    restaurantId: restaurant.id,
     to: order.customerPhone,
     message,
   });
@@ -258,6 +259,7 @@ export async function confirmOrder(formData: FormData) {
   }
 
   await safeSendWhatsAppText({
+    restaurantId: restaurant.id,
     to: order.customerPhone,
     message,
   });

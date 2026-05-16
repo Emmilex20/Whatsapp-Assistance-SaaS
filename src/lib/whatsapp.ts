@@ -1,14 +1,19 @@
 type SendWhatsAppTextParams = {
   to: string;
   message: string;
+  accessToken?: string;
+  phoneNumberId?: string;
 };
 
 export async function sendWhatsAppText({
   to,
   message,
+  accessToken,
+  phoneNumberId: providedPhoneNumberId,
 }: SendWhatsAppTextParams) {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = accessToken || process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId =
+    providedPhoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const apiVersion = process.env.WHATSAPP_API_VERSION || "v21.0";
 
   if (!token) {

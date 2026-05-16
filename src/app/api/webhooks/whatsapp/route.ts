@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
       const menuReply = await buildMenuReply(restaurant.id);
 
       await safeSendWhatsAppText({
+        restaurantId: restaurant.id,
         to: from,
         message: menuReply,
       });
@@ -150,6 +151,7 @@ export async function POST(request: NextRequest) {
 
       if (orderResult) {
         await safeSendWhatsAppText({
+          restaurantId: restaurant.id,
           to: from,
           message: orderResult.reply,
         });
@@ -170,6 +172,7 @@ export async function POST(request: NextRequest) {
       });
 
       await safeSendWhatsAppText({
+        restaurantId: restaurant.id,
         to: from,
         message: deliveryReply,
       });
@@ -193,6 +196,7 @@ export async function POST(request: NextRequest) {
 
       if (orderResult) {
         await safeSendWhatsAppText({
+          restaurantId: restaurant.id,
           to: from,
           message: orderResult.reply,
         });
@@ -217,6 +221,7 @@ export async function POST(request: NextRequest) {
 
     if (faq) {
       await safeSendWhatsAppText({
+        restaurantId: restaurant.id,
         to: from,
         message: faq.answer,
       });
@@ -255,6 +260,7 @@ export async function POST(request: NextRequest) {
           });
 
           await safeSendWhatsAppText({
+            restaurantId: restaurant.id,
             to: from,
             message: aiResult.reply,
           });
@@ -276,6 +282,7 @@ export async function POST(request: NextRequest) {
     }
 
     await safeSendWhatsAppText({
+      restaurantId: restaurant.id,
       to: from,
       message: automation.response,
     });

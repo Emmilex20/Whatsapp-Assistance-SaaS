@@ -8,6 +8,10 @@ const envItems = [
   "WHATSAPP_VERIFY_TOKEN",
   "WHATSAPP_API_VERSION",
   "WHATSAPP_SEND_ENABLED",
+  "NEXT_PUBLIC_META_APP_ID",
+  "NEXT_PUBLIC_META_WHATSAPP_CONFIG_ID",
+  "META_APP_SECRET",
+  "WHATSAPP_TOKEN_ENCRYPTION_KEY",
   "NEXT_PUBLIC_APP_URL",
 ];
 
@@ -85,6 +89,9 @@ export default async function WhatsAppProductionPage() {
           <div className="mt-5 space-y-3">
             {[
               "Create or open your Meta developer app.",
+              "Create a Facebook Login for Business configuration for WhatsApp Embedded Signup.",
+              "Add NEXT_PUBLIC_META_APP_ID and NEXT_PUBLIC_META_WHATSAPP_CONFIG_ID in Vercel.",
+              "Add META_APP_SECRET and WHATSAPP_TOKEN_ENCRYPTION_KEY in Vercel.",
               "Add the WhatsApp product.",
               "Copy your Phone Number ID from WhatsApp API Setup.",
               "Generate or attach a permanent access token.",

@@ -107,6 +107,12 @@ model Restaurant {
   name                  String
   whatsappNumber        String?
   whatsappPhoneNumberId String?
+  whatsappBusinessAccountId String?
+  whatsappAccessTokenEncrypted String?
+  whatsappAccessTokenIv String?
+  whatsappAccessTokenTag String?
+  whatsappConnectionStatus String @default("NOT_CONNECTED")
+  whatsappConnectedAt   DateTime?
   address               String?
   openingTime           String?
   closingTime           String?

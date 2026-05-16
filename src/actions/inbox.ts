@@ -119,6 +119,7 @@ export async function sendHumanReply(formData: FormData) {
   });
 
   await safeSendWhatsAppText({
+    restaurantId: restaurant.id,
     to: conversation.customerPhone,
     message,
   });

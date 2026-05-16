@@ -23,19 +23,21 @@ export function HeroSection() {
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link href="/dashboard">
+            <Link href="/dashboard/settings/whatsapp">
               <Button className="h-11 rounded-full bg-emerald-500 px-5 text-sm text-white hover:bg-emerald-400">
-                Open dashboard demo
+                Connect WhatsApp
                 <ArrowRight className="ml-2" size={16} />
               </Button>
             </Link>
 
-            <Button
-              variant="outline"
-              className="h-11 rounded-full border-white/10 bg-white/5 px-5 text-sm text-white hover:bg-white/10"
-            >
-              See how it works
-            </Button>
+            <Link href="/dashboard">
+              <Button
+                variant="outline"
+                className="h-11 rounded-full border-white/10 bg-white/5 px-5 text-sm text-white hover:bg-white/10"
+              >
+                Open dashboard demo
+              </Button>
+            </Link>
           </div>
 
           <div className="mt-7 grid gap-3 text-sm text-zinc-400 sm:grid-cols-3">

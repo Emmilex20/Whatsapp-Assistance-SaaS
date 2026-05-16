@@ -8,15 +8,21 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MetaEmbeddedSignupButton } from "@/components/whatsapp/meta-embedded-signup-button";
 import { WhatsAppTestSendForm } from "@/components/whatsapp/whatsapp-test-send-form";
 import { WhatsAppTemplateTestForm } from "@/components/whatsapp/whatsapp-template-test-form";
+import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { requirePermission } from "@/lib/require-permission";
 import { whatsappSetupSteps } from "@/lib/site";
 
 export default async function WhatsAppSettingsPage() {
   await requirePermission("manage_whatsapp");
 
-  const callbackUrl = "https://serveflow-taupe.vercel.app/api/webhooks/whatsapp";
+  const restaurant = await getOrCreateCurrentRestaurant();
+  const callbackUrl = `${
+    process.env.NEXT_PUBLIC_APP_URL || "https://your-domain.com"
+  }/api/webhooks/whatsapp`;
+  const connected = Boolean(restaurant?.whatsappPhoneNumberId);
 
   return (
     <div className="space-y-6">
@@ -31,6 +37,40 @@ export default async function WhatsAppSettingsPage() {
           Add your Meta WhatsApp credentials and connect your webhook endpoint.
           This is the bridge between customer WhatsApp messages and ServeFlow.
         </p>
+      </section>
+
+      <MetaEmbeddedSignupButton />
+
+      <section
+        className={`rounded-3xl border p-5 ${
+          connected
+            ? "border-emerald-400/20 bg-emerald-400/10"
+            : "border-yellow-400/20 bg-yellow-400/10"
+        }`}
+      >
+        <h2 className="text-base font-semibold text-white">
+          {connected ? "WhatsApp account connected" : "WhatsApp not connected"}
+        </h2>
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4">
+            <p className="text-xs text-zinc-500">Connection status</p>
+            <p className="mt-2 break-words text-sm font-medium text-white">
+              {restaurant?.whatsappConnectionStatus || "NOT_CONNECTED"}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4">
+            <p className="text-xs text-zinc-500">Phone Number ID</p>
+            <p className="mt-2 break-all text-sm font-medium text-white">
+              {restaurant?.whatsappPhoneNumberId || "Not connected"}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4">
+            <p className="text-xs text-zinc-500">WABA ID</p>
+            <p className="mt-2 break-all text-sm font-medium text-white">
+              {restaurant?.whatsappBusinessAccountId || "Not connected"}
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_0.8fr]">

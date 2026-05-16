@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { checkPermission } from "@/lib/require-permission";
 import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 
@@ -10,6 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
     }
 
+    const restaurant = await getOrCreateCurrentRestaurant();
     const body = await request.json();
 
     const to = String(body.to || "").trim();
@@ -23,6 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await safeSendWhatsAppText({
+      restaurantId: restaurant?.id,
       to,
       message,
     });
