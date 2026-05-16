@@ -10,6 +10,7 @@ import {
   ClipboardList,
   CreditCard,
   Handshake,
+  HeartHandshake,
   Home,
   ImageIcon,
   Inbox,
@@ -56,6 +57,7 @@ export const dashboardLinks = [
   { label: "Menu", href: "/dashboard/menu", icon: Utensils },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
+  { label: "Loyalty", href: "/dashboard/loyalty", icon: HeartHandshake },
   {
     label: "Customer Memory",
     href: "/dashboard/customer-memory",
@@ -75,6 +77,11 @@ export const dashboardLinks = [
   { label: "Restaurants", href: "/dashboard/restaurants", icon: Building2 },
   { label: "AI Settings", href: "/dashboard/settings/ai", icon: BrainCircuit },
   { label: "AI Upsells", href: "/dashboard/ai/upsells", icon: ShoppingBag },
+  {
+    label: "AI Campaigns",
+    href: "/dashboard/ai/campaign-generator",
+    icon: Sparkles,
+  },
   { label: "Knowledge", href: "/dashboard/knowledge", icon: BookOpen },
   { label: "Settings", href: "/dashboard/settings/business", icon: Settings },
   { label: "Delivery", href: "/dashboard/settings/delivery", icon: Truck },

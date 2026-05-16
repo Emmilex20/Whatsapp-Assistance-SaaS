@@ -1,6 +1,7 @@
 import { isLikelyAddress } from "@/lib/address-intent";
 import { extractCustomerPreferences } from "@/lib/ai/customer-preference-extractor";
 import { trackAcceptedUpsells } from "@/lib/ai/upsell-engine";
+import { syncCustomerLoyaltyForCustomer } from "@/lib/customer-loyalty";
 import { findMatchingDeliveryZone } from "@/lib/delivery-fee";
 import { extractSimpleOrderItem, isOrderIntent } from "@/lib/order-intent";
 import { prisma } from "@/lib/prisma";
@@ -83,6 +84,14 @@ export async function handleWhatsAppOrder({
         },
       }).catch((error) => {
         console.warn("Customer preference extraction skipped:", error);
+      });
+
+      syncCustomerLoyaltyForCustomer({
+        restaurantId,
+        customerPhone,
+        customerName,
+      }).catch((error) => {
+        console.warn("Customer loyalty sync skipped:", error);
       });
 
       return {
@@ -185,6 +194,14 @@ A staff member will confirm your order shortly.`,
     })),
   }).catch((error) => {
     console.warn("Upsell acceptance tracking skipped:", error);
+  });
+
+  syncCustomerLoyaltyForCustomer({
+    restaurantId,
+    customerPhone,
+    customerName,
+  }).catch((error) => {
+    console.warn("Customer loyalty sync skipped:", error);
   });
 
   return {

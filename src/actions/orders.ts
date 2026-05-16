@@ -5,6 +5,7 @@ import type { OrderStatus } from "@/generated/prisma/client";
 import { extractCustomerPreferences } from "@/lib/ai/customer-preference-extractor";
 import { trackAcceptedUpsells } from "@/lib/ai/upsell-engine";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
+import { syncCustomerLoyaltyForCustomer } from "@/lib/customer-loyalty";
 import { findMatchingDeliveryZone } from "@/lib/delivery-fee";
 import { getOrderStatusMessage } from "@/lib/order-status-message";
 import { prisma } from "@/lib/prisma";
@@ -111,7 +112,16 @@ export async function createManualOrder(formData: FormData) {
     console.warn("Upsell acceptance tracking skipped:", error);
   });
 
+  syncCustomerLoyaltyForCustomer({
+    restaurantId: restaurant.id,
+    customerPhone,
+    customerName,
+  }).catch((error) => {
+    console.warn("Customer loyalty sync skipped:", error);
+  });
+
   revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard/loyalty");
 
   return { success: "Order created successfully." };
 }
@@ -177,10 +187,19 @@ export async function updateOrderStatus(formData: FormData) {
     message,
   });
 
+  syncCustomerLoyaltyForCustomer({
+    restaurantId: restaurant.id,
+    customerPhone: order.customerPhone,
+    customerName: order.customerName,
+  }).catch((error) => {
+    console.warn("Customer loyalty sync skipped:", error);
+  });
+
   revalidatePath("/dashboard/orders");
   revalidatePath(`/dashboard/orders/${order.id}`);
   revalidatePath("/dashboard/inbox");
   revalidatePath("/dashboard/customers");
+  revalidatePath("/dashboard/loyalty");
 
   if (order.conversationId) {
     revalidatePath(`/dashboard/customers/${order.conversationId}`);
@@ -243,10 +262,19 @@ export async function confirmOrder(formData: FormData) {
     message,
   });
 
+  syncCustomerLoyaltyForCustomer({
+    restaurantId: restaurant.id,
+    customerPhone: order.customerPhone,
+    customerName: order.customerName,
+  }).catch((error) => {
+    console.warn("Customer loyalty sync skipped:", error);
+  });
+
   revalidatePath("/dashboard/orders");
   revalidatePath(`/dashboard/orders/${order.id}`);
   revalidatePath("/dashboard/inbox");
   revalidatePath("/dashboard/customers");
+  revalidatePath("/dashboard/loyalty");
 
   if (order.conversationId) {
     revalidatePath(`/dashboard/customers/${order.conversationId}`);

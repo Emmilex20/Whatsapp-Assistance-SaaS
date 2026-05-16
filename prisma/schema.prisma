@@ -134,6 +134,7 @@ model Restaurant {
   teamMembers   TeamMember[]
   knowledgeBaseItems KnowledgeBaseItem[]
   customerMemories CustomerMemory[]
+  customerLoyalty CustomerLoyalty[]
   aiUsageLogs AIUsageLog[]
   mediaGenerations MediaGeneration[]
   promoCampaigns PromoCampaign[]
@@ -347,6 +348,29 @@ model CustomerMemory {
   @@index([restaurantId, customerPhone])
   @@index([restaurantId, active])
   @@index([restaurantId, reviewStatus])
+}
+
+model CustomerLoyalty {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  customerPhone String
+  customerName  String?
+  totalOrders   Int      @default(0)
+  totalSpent    Int      @default(0)
+  loyaltyTier   String   @default("bronze")
+  points        Int      @default(0)
+  vip           Boolean  @default(false)
+  inactiveRisk  Boolean  @default(false)
+  lastOrderAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, customerPhone])
+  @@index([restaurantId, loyaltyTier])
+  @@index([restaurantId, vip])
+  @@index([restaurantId, inactiveRisk])
 }
 
 model UpsellRule {

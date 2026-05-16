@@ -66,6 +66,12 @@ export default async function CampaignsPage() {
         <div className="action-row">
           <CreateRecommendedCampaignsButton />
           <Link
+            href="/dashboard/ai/campaign-generator"
+            className="inline-flex h-10 shrink-0 items-center rounded-full bg-white/[0.06] px-5 text-sm font-medium text-white hover:bg-white/10"
+          >
+            AI generator
+          </Link>
+          <Link
             href="/dashboard/campaigns/calendar"
             className="inline-flex h-10 shrink-0 items-center rounded-full bg-emerald-500 px-5 text-sm font-medium text-white hover:bg-emerald-400"
           >
