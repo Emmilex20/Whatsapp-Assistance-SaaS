@@ -14,6 +14,14 @@ type SaveBotMessageParams = {
   message: string;
 };
 
+type SaveVoiceTranscriptionMessageParams = {
+  restaurantId: string;
+  customerPhone: string;
+  customerName?: string;
+  transcriptionId: string;
+  transcript: string;
+};
+
 export async function saveIncomingCustomerMessage({
   restaurantId,
   customerPhone,
@@ -81,4 +89,82 @@ export async function saveBotMessage({
       content: message,
     },
   });
+}
+
+export async function saveVoiceTranscriptionMessage({
+  restaurantId,
+  customerPhone,
+  customerName,
+  transcriptionId,
+  transcript,
+}: SaveVoiceTranscriptionMessageParams) {
+  const content = `Voice note transcript: ${transcript}`;
+  const conversation = await prisma.conversation.upsert({
+    where: {
+      restaurantId_customerPhone: {
+        restaurantId,
+        customerPhone,
+      },
+    },
+    update: {
+      customerName,
+      updatedAt: new Date(),
+    },
+    create: {
+      restaurantId,
+      customerPhone,
+      customerName,
+      status: "BOT_ACTIVE",
+    },
+  });
+
+  const message = await prisma.message.create({
+    data: {
+      conversationId: conversation.id,
+      senderType: "CUSTOMER",
+      content,
+    },
+  });
+
+  await prisma.voiceTranscription.update({
+    where: {
+      id: transcriptionId,
+    },
+    data: {
+      conversationId: conversation.id,
+      messageId: message.id,
+    },
+  });
+
+  extractCustomerPreferences({
+    restaurantId,
+    customerPhone,
+    message: transcript,
+  }).catch((error) => {
+    console.warn("Customer preference extraction skipped:", error);
+  });
+
+  const alert = await detectAndEscalateComplaint({
+    restaurantId,
+    conversationId: conversation.id,
+    message: transcript,
+  });
+
+  if (!alert) {
+    return {
+      conversation,
+      message,
+    };
+  }
+
+  const updatedConversation = await prisma.conversation.findUniqueOrThrow({
+    where: {
+      id: conversation.id,
+    },
+  });
+
+  return {
+    conversation: updatedConversation,
+    message,
+  };
 }

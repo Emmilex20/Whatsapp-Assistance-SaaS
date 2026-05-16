@@ -11,6 +11,7 @@ import { buildMenuReply, isMenuRequest } from "@/lib/menu-reply";
 import { prisma } from "@/lib/prisma";
 import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 import { getRestaurantTrialAccessStatus } from "@/lib/trial-access";
+import { processIncomingVoiceNote } from "@/lib/voice-transcription";
 import { handleWhatsAppOrder } from "@/lib/whatsapp-orders";
 
 export async function GET(request: NextRequest) {
@@ -47,16 +48,18 @@ export async function POST(request: NextRequest) {
 
     const phoneNumberId = value?.metadata?.phone_number_id;
     const from = message.from;
-    const text = message.text?.body;
+    let text = message.text?.body;
+    const audio = message.audio;
     const contactName = value?.contacts?.[0]?.profile?.name;
 
     console.log("WhatsApp webhook received:", {
       phoneNumberId,
       from,
       hasText: Boolean(text),
+      hasAudio: Boolean(audio?.id),
     });
 
-    if (!phoneNumberId || !from || !text) {
+    if (!phoneNumberId || !from || (!text && !audio?.id)) {
       return NextResponse.json({ received: true });
     }
 
@@ -71,12 +74,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const conversation = await saveIncomingCustomerMessage({
-      restaurantId: restaurant.id,
-      customerPhone: from,
-      customerName: contactName,
-      message: text,
-    });
+    let conversation;
+
+    if (!text && audio?.id) {
+      const voiceResult = await processIncomingVoiceNote({
+        restaurantId: restaurant.id,
+        customerPhone: from,
+        customerName: contactName,
+        mediaId: audio.id,
+        mimeType: audio.mime_type,
+      });
+
+      conversation = voiceResult.conversation;
+      text = voiceResult.transcript;
+
+      if (!text) {
+        return NextResponse.json({ received: true });
+      }
+    } else {
+      conversation = await saveIncomingCustomerMessage({
+        restaurantId: restaurant.id,
+        customerPhone: from,
+        customerName: contactName,
+        message: text,
+      });
+    }
 
     const access = await getRestaurantTrialAccessStatus(restaurant.id);
 

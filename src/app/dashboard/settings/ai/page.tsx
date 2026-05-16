@@ -36,6 +36,16 @@ export default async function AISettingsPage() {
       value: process.env.AI_UPSELLS_ENABLED || "false",
     },
     {
+      key: "VOICE_TRANSCRIPTION_ENABLED",
+      configured: Boolean(process.env.VOICE_TRANSCRIPTION_ENABLED),
+      value: process.env.VOICE_TRANSCRIPTION_ENABLED || "false",
+    },
+    {
+      key: "VOICE_TRANSCRIPTION_MODEL",
+      configured: Boolean(process.env.VOICE_TRANSCRIPTION_MODEL),
+      value: process.env.VOICE_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe",
+    },
+    {
       key: "AI_MODEL",
       configured: Boolean(process.env.AI_MODEL),
       value: process.env.AI_MODEL || "gpt-5-mini",

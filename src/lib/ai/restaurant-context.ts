@@ -12,6 +12,7 @@ export async function buildRestaurantAIContext(
     automations,
     knowledgeItems,
     customerMemories,
+    voiceTranscriptions,
   ] = await Promise.all([
       prisma.restaurant.findUnique({
         where: { id: restaurantId },
@@ -66,6 +67,20 @@ export async function buildRestaurantAIContext(
         },
         orderBy: [{ confidence: "desc" }, { updatedAt: "desc" }],
         take: customerPhone ? 20 : 50,
+      }),
+
+      prisma.voiceTranscription.findMany({
+        where: {
+          restaurantId,
+          status: {
+            in: ["COMPLETED", "CORRECTED"],
+          },
+          ...(customerPhone ? { conversation: { customerPhone } } : {}),
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: customerPhone ? 8 : 20,
       }),
     ]);
 
@@ -126,6 +141,17 @@ export async function buildRestaurantAIContext(
       ? "No active customer memories saved for this customer."
       : "No active customer memories saved.";
 
+  const voiceTranscriptionText = voiceTranscriptions.length
+    ? voiceTranscriptions
+        .map(
+          (item) =>
+            `Transcript: ${item.correctedText || item.transcript}\nConfidence: ${item.confidence}%\nCreated: ${item.createdAt.toLocaleDateString()}`
+        )
+        .join("\n\n")
+    : customerPhone
+      ? "No voice note transcripts saved for this customer."
+      : "No voice note transcripts saved.";
+
   return `
 Restaurant:
 Name: ${restaurant?.name || "Restaurant"}
@@ -160,5 +186,8 @@ ${knowledgeText}
 
 Customer memories:
 ${customerMemoryText}
+
+Voice note transcripts:
+${voiceTranscriptionText}
 `.trim();
 }

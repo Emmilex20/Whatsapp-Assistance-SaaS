@@ -126,6 +126,7 @@ model Restaurant {
   faqs          FAQ[]
   automations   Automation[]
   conversations Conversation[]
+  voiceTranscriptions VoiceTranscription[]
   deliveryZones DeliveryZone[]
   orders        Order[]
   subscription  Subscription?
@@ -207,6 +208,7 @@ model Conversation {
   orders             Order[]
   aiUsageLogs        AIUsageLog[]
   complaintAlerts    ComplaintAlert[]
+  voiceTranscriptions VoiceTranscription[]
 
   @@unique([restaurantId, customerPhone])
 }
@@ -220,6 +222,35 @@ model Message {
   createdAt      DateTime   @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  voiceTranscription VoiceTranscription?
+}
+
+model VoiceTranscription {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  conversationId  String
+  messageId       String?  @unique
+  whatsappMediaId String
+  mimeType        String?
+  audioData       Bytes?
+  audioSize       Int      @default(0)
+  transcript      String?
+  correctedText   String?
+  confidence      Int      @default(0)
+  language        String   @default("en-pidgin")
+  status          String   @default("PENDING")
+  error           String?
+  audioExpiresAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  message      Message?     @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, createdAt])
+  @@index([conversationId, createdAt])
+  @@index([status, audioExpiresAt])
 }
 
 model Subscription {

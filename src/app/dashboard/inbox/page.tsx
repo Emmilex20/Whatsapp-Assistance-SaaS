@@ -19,6 +19,7 @@ import { updateConversationInternalNotes } from "@/actions/internal-notes";
 import { AISuggestionPanel } from "@/components/inbox/ai-suggestion-panel";
 import { ConversationLabelsForm } from "@/components/inbox/conversation-labels-form";
 import { ManualReplyForm } from "@/components/inbox/manual-reply-form";
+import { VoiceTranscriptionCard } from "@/components/inbox/voice-transcription-card";
 import { ConversationStatusForm } from "@/components/inbox/conversation-status-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { InternalNotesForm } from "@/components/shared/internal-notes-form";
@@ -109,6 +110,9 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
           assignedTeamMember: true,
           messages: {
             orderBy: { createdAt: "asc" },
+            include: {
+              voiceTranscription: true,
+            },
           },
         },
       })
@@ -152,6 +156,9 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
             assignedTeamMember: true,
             messages: {
               orderBy: { createdAt: "asc" },
+              include: {
+                voiceTranscription: true,
+              },
             },
           },
       })
@@ -683,6 +690,25 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                         </div>
 
                         <p>{chat.content}</p>
+
+                        {chat.voiceTranscription && (
+                          <VoiceTranscriptionCard
+                            transcription={{
+                              id: chat.voiceTranscription.id,
+                              transcript: chat.voiceTranscription.transcript,
+                              correctedText:
+                                chat.voiceTranscription.correctedText,
+                              confidence:
+                                chat.voiceTranscription.confidence,
+                              status: chat.voiceTranscription.status,
+                              mimeType: chat.voiceTranscription.mimeType,
+                              audioSize: chat.voiceTranscription.audioSize,
+                              audioAvailable: Boolean(
+                                chat.voiceTranscription.audioData
+                              ),
+                            }}
+                          />
+                        )}
 
                         <p className="mt-1 text-right text-[11px] opacity-70">
                           {chat.createdAt.toLocaleTimeString([], {

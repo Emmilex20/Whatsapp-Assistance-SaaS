@@ -7,6 +7,7 @@ export const productionChecklist = [
   "WHATSAPP_VERIFY_TOKEN matches Meta webhook settings.",
   "WHATSAPP_SEND_ENABLED is false until real inbound tests pass.",
   "AI_RESPONSES_ENABLED is false until restaurant data is complete.",
+  "VOICE_TRANSCRIPTION_ENABLED is false until voice-note tests pass.",
   "MEDIA_GENERATION_ENABLED is false until Replicate cost testing passes.",
   "OPENAI_API_KEY is configured only in production environment variables.",
   "REPLICATE_API_TOKEN is configured only if media generation is enabled.",
