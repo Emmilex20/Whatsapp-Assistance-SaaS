@@ -20,7 +20,7 @@ type TrackAcceptedUpsellsParams = {
   }[];
 };
 
-const UPSSELL_REPEAT_HOURS = 6;
+const UPSELL_REPEAT_HOURS = 6;
 const MAX_CUSTOMER_UPSELLS_PER_DAY = 2;
 
 function normalize(value: string) {
@@ -114,7 +114,7 @@ export async function buildUpsellSuggestion({
   if (!matchingRule) return null;
 
   const repeatWindow = new Date();
-  repeatWindow.setHours(repeatWindow.getHours() - UPSSELL_REPEAT_HOURS);
+  repeatWindow.setHours(repeatWindow.getHours() - UPSELL_REPEAT_HOURS);
 
   const recentSameConversationAttempt = await prisma.upsellAttempt.findFirst({
     where: {
