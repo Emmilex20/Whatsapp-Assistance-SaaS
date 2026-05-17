@@ -9,6 +9,7 @@ import { buildDeliveryReply, isDeliveryRequest } from "@/lib/delivery-reply";
 import { matchFAQ } from "@/lib/faq-matcher";
 import { buildMenuReply, isMenuRequest } from "@/lib/menu-reply";
 import { prisma } from "@/lib/prisma";
+import { buildRuleBasedCustomerReply } from "@/lib/rule-based-customer-reply";
 import { safeSendWhatsAppText } from "@/lib/safe-whatsapp";
 import { getRestaurantTrialAccessStatus } from "@/lib/trial-access";
 import { processIncomingVoiceNote } from "@/lib/voice-transcription";
@@ -276,6 +277,40 @@ export async function POST(request: NextRequest) {
             },
           });
         }
+
+        if (!aiResult.reply && !aiResult.blocked) {
+          const fallbackReply = buildRuleBasedCustomerReply({
+            restaurantName: restaurant.name,
+            message: text,
+          });
+
+          await safeSendWhatsAppText({
+            restaurantId: restaurant.id,
+            to: from,
+            message: fallbackReply,
+          });
+
+          await saveBotMessage({
+            conversationId: conversation.id,
+            message: fallbackReply,
+          });
+        }
+      } else {
+        const fallbackReply = buildRuleBasedCustomerReply({
+          restaurantName: restaurant.name,
+          message: text,
+        });
+
+        await safeSendWhatsAppText({
+          restaurantId: restaurant.id,
+          to: from,
+          message: fallbackReply,
+        });
+
+        await saveBotMessage({
+          conversationId: conversation.id,
+          message: fallbackReply,
+        });
       }
 
       return NextResponse.json({ received: true });
