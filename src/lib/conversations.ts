@@ -28,6 +28,21 @@ export async function saveIncomingCustomerMessage({
   customerName,
   message,
 }: SaveIncomingMessageParams) {
+  const existingConversation = await prisma.conversation.findUnique({
+    where: {
+      restaurantId_customerPhone: {
+        restaurantId,
+        customerPhone,
+      },
+    },
+    select: {
+      workflowStatus: true,
+    },
+  });
+
+  const shouldReopenConversation =
+    existingConversation?.workflowStatus === "RESOLVED";
+
   const conversation = await prisma.conversation.upsert({
     where: {
       restaurantId_customerPhone: {
@@ -37,6 +52,13 @@ export async function saveIncomingCustomerMessage({
     },
     update: {
       customerName,
+      ...(shouldReopenConversation
+        ? {
+            status: "BOT_ACTIVE",
+            workflowStatus: "OPEN",
+            resolvedAt: null,
+          }
+        : {}),
       updatedAt: new Date(),
     },
     create: {
@@ -44,6 +66,7 @@ export async function saveIncomingCustomerMessage({
       customerPhone,
       customerName,
       status: "BOT_ACTIVE",
+      workflowStatus: "OPEN",
     },
   });
 
@@ -99,6 +122,21 @@ export async function saveVoiceTranscriptionMessage({
   transcript,
 }: SaveVoiceTranscriptionMessageParams) {
   const content = `Voice note transcript: ${transcript}`;
+  const existingConversation = await prisma.conversation.findUnique({
+    where: {
+      restaurantId_customerPhone: {
+        restaurantId,
+        customerPhone,
+      },
+    },
+    select: {
+      workflowStatus: true,
+    },
+  });
+
+  const shouldReopenConversation =
+    existingConversation?.workflowStatus === "RESOLVED";
+
   const conversation = await prisma.conversation.upsert({
     where: {
       restaurantId_customerPhone: {
@@ -108,6 +146,13 @@ export async function saveVoiceTranscriptionMessage({
     },
     update: {
       customerName,
+      ...(shouldReopenConversation
+        ? {
+            status: "BOT_ACTIVE",
+            workflowStatus: "OPEN",
+            resolvedAt: null,
+          }
+        : {}),
       updatedAt: new Date(),
     },
     create: {
@@ -115,6 +160,7 @@ export async function saveVoiceTranscriptionMessage({
       customerPhone,
       customerName,
       status: "BOT_ACTIVE",
+      workflowStatus: "OPEN",
     },
   });
 

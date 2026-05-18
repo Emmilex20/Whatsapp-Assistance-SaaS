@@ -227,6 +227,21 @@ async function getOrCreateVoiceConversation({
   customerPhone: string;
   customerName?: string;
 }) {
+  const existingConversation = await prisma.conversation.findUnique({
+    where: {
+      restaurantId_customerPhone: {
+        restaurantId,
+        customerPhone,
+      },
+    },
+    select: {
+      workflowStatus: true,
+    },
+  });
+
+  const shouldReopenConversation =
+    existingConversation?.workflowStatus === "RESOLVED";
+
   return prisma.conversation.upsert({
     where: {
       restaurantId_customerPhone: {
@@ -236,6 +251,13 @@ async function getOrCreateVoiceConversation({
     },
     update: {
       customerName,
+      ...(shouldReopenConversation
+        ? {
+            status: "BOT_ACTIVE",
+            workflowStatus: "OPEN",
+            resolvedAt: null,
+          }
+        : {}),
       updatedAt: new Date(),
     },
     create: {
@@ -243,6 +265,7 @@ async function getOrCreateVoiceConversation({
       customerPhone,
       customerName,
       status: "BOT_ACTIVE",
+      workflowStatus: "OPEN",
     },
   });
 }
