@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { findBestDeliveryZoneMatch } from "@/lib/delivery-fee";
 
 export async function findPossibleDeliveryZoneMatches({
   restaurantId,
@@ -14,7 +15,10 @@ export async function findPossibleDeliveryZoneMatches({
     },
   });
 
-  const normalized = message.toLowerCase();
+  const bestMatch = findBestDeliveryZoneMatch({
+    address: message,
+    zones,
+  });
 
-  return zones.filter((zone) => normalized.includes(zone.area.toLowerCase()));
+  return bestMatch ? [bestMatch] : [];
 }

@@ -63,12 +63,10 @@ export const dashboardLinks = [
   { label: "Brand Kit", href: "/dashboard/brand", icon: Palette },
   { label: "Media", href: "/dashboard/media", icon: ImageIcon },
   { label: "Campaigns", href: "/dashboard/campaigns", icon: Megaphone },
-  { label: "Outreach", href: "/dashboard/outreach", icon: Megaphone },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Insights", href: "/dashboard/insights", icon: BrainCircuit },
   { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { label: "Restaurants", href: "/dashboard/restaurants", icon: Building2 },
-  { label: "AI Settings", href: "/dashboard/settings/ai", icon: BrainCircuit },
   { label: "AI Upsells", href: "/dashboard/ai/upsells", icon: ShoppingBag },
   {
     label: "AI Campaigns",

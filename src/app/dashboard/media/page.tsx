@@ -5,6 +5,7 @@ import { CopyCaptionButton } from "@/components/media/copy-caption-button";
 import { DeleteMediaButton } from "@/components/media/delete-media-button";
 import { FavoriteMediaButton } from "@/components/media/favorite-media-button";
 import { GenerateCaptionButton } from "@/components/media/generate-caption-button";
+import { MediaFilterBar } from "@/components/media/media-filter-bar";
 import { ReusePromptButton } from "@/components/media/reuse-prompt-button";
 import { CreatePromoImageForm } from "@/components/media/create-promo-image-form";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -64,29 +65,6 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
       })
     : [];
 
-  function mediaFilterHref({
-    template = templateFilter,
-    status = statusFilter,
-    favorite = favoriteFilter,
-    caption = captionFilter,
-  }: {
-    template?: string;
-    status?: string;
-    favorite?: string;
-    caption?: string;
-  }) {
-    const query = new URLSearchParams();
-
-    if (template && template !== "all") query.set("template", template);
-    if (status && status !== "all") query.set("status", status);
-    if (favorite && favorite !== "all") query.set("favorite", favorite);
-    if (caption && caption !== "all") query.set("caption", caption);
-
-    const queryString = query.toString();
-
-    return queryString ? `/dashboard/media?${queryString}` : "/dashboard/media";
-  }
-
   return (
     <div className="space-y-6">
       <section>
@@ -140,119 +118,12 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
         ))}
       </section>
 
-      <section className="space-y-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Filter by template
-          </p>
-
-          <div className="action-row">
-            <a
-              href={mediaFilterHref({ template: "all" })}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                templateFilter === "all"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              All templates
-            </a>
-
-            {mediaPromptTemplates.map((template) => (
-              <a
-                key={template.id}
-                href={mediaFilterHref({ template: template.id })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  templateFilter === template.id
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {template.name}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Filter by status
-          </p>
-
-          <div className="action-row">
-            {["all", "COMPLETED", "SKIPPED", "FAILED"].map((status) => (
-              <a
-                key={status}
-                href={mediaFilterHref({ status })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  statusFilter === status
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {status === "all" ? "All statuses" : status.toLowerCase()}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Favorites
-          </p>
-
-          <div className="action-row">
-            {[
-              {
-                label: "All assets",
-                value: "all",
-              },
-              {
-                label: "Favorites only",
-                value: "favorites",
-              },
-            ].map((item) => (
-              <a
-                key={item.value}
-                href={mediaFilterHref({ favorite: item.value })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  favoriteFilter === item.value
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Captions
-          </p>
-
-          <div className="action-row">
-            {[
-              { label: "All captions", value: "all" },
-              { label: "With caption", value: "with_caption" },
-              { label: "Without caption", value: "without_caption" },
-            ].map((item) => (
-              <a
-                key={item.value}
-                href={mediaFilterHref({ caption: item.value })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  captionFilter === item.value
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      <MediaFilterBar
+        templateFilter={templateFilter}
+        statusFilter={statusFilter}
+        favoriteFilter={favoriteFilter}
+        captionFilter={captionFilter}
+      />
 
       {mediaUsage && (
         <section className="grid gap-4 md:grid-cols-2">
@@ -443,13 +314,6 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5">
-        <h2 className="text-base font-semibold text-white">Cost warning</h2>
-        <p className="mt-2 text-sm leading-6 text-yellow-100">
-          Replicate media generation can cost more than text AI. Keep
-          MEDIA_GENERATION_ENABLED=false until you are ready to test carefully.
-        </p>
-      </section>
     </div>
   );
 }
