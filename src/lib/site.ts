@@ -6,10 +6,8 @@ import {
   BookOpen,
   BrainCircuit,
   Building2,
-  CheckCircle2,
   ClipboardList,
   CreditCard,
-  Handshake,
   HeartHandshake,
   Home,
   ImageIcon,
@@ -26,7 +24,6 @@ import {
   UserPlus,
   Users,
   Workflow,
-  Rocket,
   CircleHelp,
 } from "lucide-react";
 
@@ -41,8 +38,6 @@ export const navLinks = [
 ];
 
 export const dashboardLinks = [
-  { label: "Launch", href: "/dashboard/launch", icon: Rocket },
-  { label: "Final Launch", href: "/dashboard/final-check/launch", icon: Rocket },
   { label: "Overview", href: "/dashboard", icon: Home },
   { label: "Operations", href: "/dashboard/operations", icon: Activity },
   {
@@ -65,8 +60,6 @@ export const dashboardLinks = [
   },
   { label: "Team", href: "/dashboard/team", icon: UserPlus },
   { label: "Tasks", href: "/dashboard/tasks", icon: ClipboardList },
-  { label: "Final Check", href: "/dashboard/final-check", icon: CheckCircle2 },
-  { label: "Pilots", href: "/dashboard/pilots", icon: Handshake },
   { label: "Brand Kit", href: "/dashboard/brand", icon: Palette },
   { label: "Media", href: "/dashboard/media", icon: ImageIcon },
   { label: "Campaigns", href: "/dashboard/campaigns", icon: Megaphone },

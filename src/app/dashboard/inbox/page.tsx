@@ -18,6 +18,7 @@ import { enableHumanTakeover, resumeBotAutomation } from "@/actions/inbox";
 import { updateConversationInternalNotes } from "@/actions/internal-notes";
 import { AISuggestionPanel } from "@/components/inbox/ai-suggestion-panel";
 import { ConversationLabelsForm } from "@/components/inbox/conversation-labels-form";
+import { InboxFilterBar } from "@/components/inbox/inbox-filter-bar";
 import { ManualReplyForm } from "@/components/inbox/manual-reply-form";
 import { VoiceTranscriptionCard } from "@/components/inbox/voice-transcription-card";
 import { ConversationStatusForm } from "@/components/inbox/conversation-status-form";
@@ -172,6 +173,11 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
         priority: selectedConversation.priority,
       })
     : null;
+  const selectedCustomerMessages =
+    selectedConversation?.messages.filter(
+      (message) => message.senderType === "CUSTOMER"
+    ) || [];
+  const selectedLastCustomerMessage = selectedCustomerMessages.at(-1)?.content;
 
   const slaSummary = {
     needsReply: conversations.filter((conversation) => {
@@ -199,58 +205,6 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
       return sla.status === "REPLIED";
     }).length,
   };
-
-  function inboxFilterHref(assigned: string) {
-    const nextParams = new URLSearchParams();
-
-    if (assigned !== "all") nextParams.set("assigned", assigned);
-    if (priorityFilter !== "all") nextParams.set("priority", priorityFilter);
-    if (slaFilter !== "all") nextParams.set("sla", slaFilter);
-    if (workflowFilter !== "all") nextParams.set("workflow", workflowFilter);
-
-    const query = nextParams.toString();
-
-    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
-  }
-
-  function priorityFilterHref(priority: string) {
-    const nextParams = new URLSearchParams();
-
-    if (assignedFilter !== "all") nextParams.set("assigned", assignedFilter);
-    if (priority !== "all") nextParams.set("priority", priority);
-    if (slaFilter !== "all") nextParams.set("sla", slaFilter);
-    if (workflowFilter !== "all") nextParams.set("workflow", workflowFilter);
-
-    const query = nextParams.toString();
-
-    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
-  }
-
-  function slaFilterHref(sla: string) {
-    const nextParams = new URLSearchParams();
-
-    if (assignedFilter !== "all") nextParams.set("assigned", assignedFilter);
-    if (priorityFilter !== "all") nextParams.set("priority", priorityFilter);
-    if (sla !== "all") nextParams.set("sla", sla);
-    if (workflowFilter !== "all") nextParams.set("workflow", workflowFilter);
-
-    const query = nextParams.toString();
-
-    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
-  }
-
-  function workflowFilterHref(workflow: string) {
-    const nextParams = new URLSearchParams();
-
-    if (assignedFilter !== "all") nextParams.set("assigned", assignedFilter);
-    if (priorityFilter !== "all") nextParams.set("priority", priorityFilter);
-    if (slaFilter !== "all") nextParams.set("sla", slaFilter);
-    if (workflow !== "all") nextParams.set("workflow", workflow);
-
-    const query = nextParams.toString();
-
-    return query ? `/dashboard/inbox?${query}` : "/dashboard/inbox";
-  }
 
   return (
     <div className="space-y-6 pb-24 md:pb-6">
@@ -326,104 +280,19 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
         ))}
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-        <div className="action-row">
-          <a
-            href={inboxFilterHref("all")}
-            className={`rounded-full px-4 py-2 text-sm transition ${
-              assignedFilter === "all"
-                ? "bg-emerald-500 text-white"
-                : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            All chats
-          </a>
-
-          <a
-            href={inboxFilterHref("unassigned")}
-            className={`rounded-full px-4 py-2 text-sm transition ${
-              assignedFilter === "unassigned"
-                ? "bg-emerald-500 text-white"
-                : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            Unassigned
-          </a>
-
-          {teamMembers.map((member) => (
-            <a
-              key={member.id}
-              href={inboxFilterHref(member.id)}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                assignedFilter === member.id
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {member.name || member.email}
-            </a>
-          ))}
-        </div>
-
-        <div className="action-row mt-3">
-          {priorityOptions.map((priority) => (
-            <a
-              key={priority}
-              href={priorityFilterHref(priority)}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                priorityFilter === priority
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {priority === "all" ? "All priorities" : priority.toLowerCase()}
-            </a>
-          ))}
-        </div>
-
-        <div className="action-row mt-3">
-          {[
-            { label: "All SLA", value: "all" },
-            { label: "Needs reply", value: "needs_reply" },
-            { label: "Overdue", value: "overdue" },
-            { label: "Replied", value: "replied" },
-          ].map((item) => (
-            <a
-              key={item.value}
-              href={slaFilterHref(item.value)}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                slaFilter === item.value
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {item.label}
-            </a>
-          ))}
-        </div>
-
-        <div className="action-row mt-3">
-          {workflowOptions.map((status) => (
-            <a
-              key={status}
-              href={workflowFilterHref(status)}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                workflowFilter === status
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {status === "all" ? "All statuses" : status.toLowerCase()}
-            </a>
-          ))}
-        </div>
-      </section>
+      <InboxFilterBar
+        assignedFilter={assignedFilter}
+        priorityFilter={priorityFilter}
+        slaFilter={slaFilter}
+        workflowFilter={workflowFilter}
+        teamMembers={teamMembers}
+      />
 
       {filteredConversations.length === 0 ? (
         <EmptyState
           icon={MessageSquareText}
           title="No conversations found"
-          description="No conversations match these filters. Incoming WhatsApp messages will appear here once your webhook is connected."
+          description="No conversations match these filters. New customer chats will appear here when messages arrive."
           actionLabel="Open WhatsApp settings"
           actionHref="/dashboard/settings/whatsapp"
         />
@@ -738,7 +607,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                   >
                     {isHumanTakeover
                       ? "Human takeover is active. Manual replies can now be sent."
-                      : "Bot is active. Take over this chat before sending manual replies."}
+                      : "The assistant is handling this chat. Take over before sending a manual reply."}
                   </p>
                 </div>
 
@@ -808,17 +677,18 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
               </div>
 
               <p className="mt-3 text-sm leading-6 text-zinc-400">
-                Summary AI is not connected yet. For now, use this panel to quickly inspect customer details.
+                {selectedLastCustomerMessage
+                  ? selectedLastCustomerMessage
+                  : "No customer message has been selected yet."}
               </p>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
-              <h3 className="text-sm font-semibold text-white">
-                Order collection
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-300">
-                If a customer says &quot;I want...&quot; or &quot;order...&quot;, ServeFlow can create a draft order from the conversation.
-              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full bg-white/[0.04] px-3 py-1 text-xs text-zinc-400">
+                  {selectedConversation?.messages.length || 0} messages
+                </span>
+                <span className="rounded-full bg-white/[0.04] px-3 py-1 text-xs text-zinc-400">
+                  {selectedCustomerMessages.length} customer messages
+                </span>
+              </div>
             </div>
 
             <div className="mt-5 rounded-3xl border border-blue-400/20 bg-blue-400/10 p-5">
@@ -832,17 +702,6 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                     ? "15 minutes"
                     : "30 minutes"}
                 . High and urgent chats become overdue faster.
-              </p>
-            </div>
-
-            <div className="mt-5 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5">
-              <h2 className="text-base font-semibold text-white">
-                AI auto-reply safety
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-yellow-100">
-                AI auto-reply will not run during human takeover. Messages
-                about refunds, complaints, wrong orders, sickness, fraud, or
-                cancellation are blocked and should be handled manually.
               </p>
             </div>
 
@@ -863,9 +722,13 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
                   />
                 </div>
 
-                <div className="mt-5">
-                  <AISuggestionPanel conversationId={selectedConversation.id} />
-                </div>
+                {restaurant?.aiAutoReplyEnabled && (
+                  <div className="mt-5">
+                    <AISuggestionPanel
+                      conversationId={selectedConversation.id}
+                    />
+                  </div>
+                )}
 
                 <div className="mt-5">
                   <InternalNotesForm
