@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
 
     const phoneNumberId = value?.metadata?.phone_number_id;
     const from = message.from;
+    const whatsappMessageId = message.id ? String(message.id) : null;
     let text = message.text?.body;
     const audio = message.audio;
     const contactName = value?.contacts?.[0]?.profile?.name;
@@ -62,6 +63,21 @@ export async function POST(request: NextRequest) {
 
     if (!phoneNumberId || !from || (!text && !audio?.id)) {
       return NextResponse.json({ received: true });
+    }
+
+    if (whatsappMessageId) {
+      const existingMessage = await prisma.message.findUnique({
+        where: {
+          externalMessageId: whatsappMessageId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (existingMessage) {
+        return NextResponse.json({ received: true });
+      }
     }
 
     const restaurant = await prisma.restaurant.findFirst({
@@ -83,6 +99,7 @@ export async function POST(request: NextRequest) {
         customerPhone: from,
         customerName: contactName,
         mediaId: audio.id,
+        whatsappMessageId,
         mimeType: audio.mime_type,
       });
 
@@ -98,6 +115,7 @@ export async function POST(request: NextRequest) {
         customerPhone: from,
         customerName: contactName,
         message: text,
+        externalMessageId: whatsappMessageId,
       });
     }
 

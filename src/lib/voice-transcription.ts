@@ -17,6 +17,7 @@ type ProcessIncomingVoiceNoteParams = {
   customerPhone: string;
   customerName?: string;
   mediaId: string;
+  whatsappMessageId?: string | null;
   mimeType?: string | null;
 };
 
@@ -273,13 +274,16 @@ async function getOrCreateVoiceConversation({
 async function saveVoiceSystemMessage({
   conversationId,
   content,
+  externalMessageId,
 }: {
   conversationId: string;
   content: string;
+  externalMessageId?: string | null;
 }) {
   return prisma.message.create({
     data: {
       conversationId,
+      externalMessageId,
       senderType: "CUSTOMER",
       content,
     },
@@ -291,6 +295,7 @@ export async function processIncomingVoiceNote({
   customerPhone,
   customerName,
   mediaId,
+  whatsappMessageId,
   mimeType,
 }: ProcessIncomingVoiceNoteParams) {
   await cleanupExpiredVoiceAudio();
@@ -316,6 +321,7 @@ export async function processIncomingVoiceNote({
     const message = await saveVoiceSystemMessage({
       conversationId: conversation.id,
       content: "Voice note received. Transcription is disabled.",
+      externalMessageId: whatsappMessageId,
     });
 
     await prisma.voiceTranscription.update({
@@ -374,6 +380,7 @@ export async function processIncomingVoiceNote({
       customerName,
       transcriptionId: transcription.id,
       transcript: result.transcript,
+      externalMessageId: whatsappMessageId,
     });
 
     return {
@@ -387,6 +394,7 @@ export async function processIncomingVoiceNote({
     const message = await saveVoiceSystemMessage({
       conversationId: conversation.id,
       content: `Voice note received. Transcription failed: ${reason}`,
+      externalMessageId: whatsappMessageId,
     });
 
     await prisma.voiceTranscription.update({

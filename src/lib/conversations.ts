@@ -7,6 +7,7 @@ type SaveIncomingMessageParams = {
   customerPhone: string;
   customerName?: string;
   message: string;
+  externalMessageId?: string | null;
 };
 
 type SaveBotMessageParams = {
@@ -20,6 +21,7 @@ type SaveVoiceTranscriptionMessageParams = {
   customerName?: string;
   transcriptionId: string;
   transcript: string;
+  externalMessageId?: string | null;
 };
 
 export async function saveIncomingCustomerMessage({
@@ -27,6 +29,7 @@ export async function saveIncomingCustomerMessage({
   customerPhone,
   customerName,
   message,
+  externalMessageId,
 }: SaveIncomingMessageParams) {
   const existingConversation = await prisma.conversation.findUnique({
     where: {
@@ -73,6 +76,7 @@ export async function saveIncomingCustomerMessage({
   await prisma.message.create({
     data: {
       conversationId: conversation.id,
+      externalMessageId,
       senderType: "CUSTOMER",
       content: message,
     },
@@ -120,6 +124,7 @@ export async function saveVoiceTranscriptionMessage({
   customerName,
   transcriptionId,
   transcript,
+  externalMessageId,
 }: SaveVoiceTranscriptionMessageParams) {
   const content = `Voice note transcript: ${transcript}`;
   const existingConversation = await prisma.conversation.findUnique({
@@ -167,6 +172,7 @@ export async function saveVoiceTranscriptionMessage({
   const message = await prisma.message.create({
     data: {
       conversationId: conversation.id,
+      externalMessageId,
       senderType: "CUSTOMER",
       content,
     },

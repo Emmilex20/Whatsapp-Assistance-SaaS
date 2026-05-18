@@ -223,6 +223,7 @@ model Conversation {
 model Message {
   id             String     @id @default(cuid())
   conversationId String
+  externalMessageId String? @unique
   senderType     SenderType
   content        String
   isDemo         Boolean    @default(false)
