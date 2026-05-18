@@ -65,6 +65,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
+    let existingIncomingMessage: {
+      conversationId: string;
+    } | null = null;
+
     if (whatsappMessageId) {
       const existingMessage = await prisma.message.findUnique({
         where: {
@@ -72,11 +76,41 @@ export async function POST(request: NextRequest) {
         },
         select: {
           id: true,
+          conversationId: true,
         },
       });
 
       if (existingMessage) {
-        return NextResponse.json({ received: true });
+        const existingBotReply = await prisma.message.findFirst({
+          where: {
+            conversationId: existingMessage.conversationId,
+            senderType: "BOT",
+            createdAt: {
+              gte: new Date(Date.now() - 2 * 60 * 1000),
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (existingBotReply) {
+          return NextResponse.json({ received: true });
+        }
+
+        if (!existingBotReply) {
+          console.warn(
+            "Duplicate WhatsApp message received before bot reply completed:",
+            {
+              whatsappMessageId,
+              conversationId: existingMessage.conversationId,
+            }
+          );
+        }
+
+        existingIncomingMessage = {
+          conversationId: existingMessage.conversationId,
+        };
       }
     }
 
@@ -93,7 +127,18 @@ export async function POST(request: NextRequest) {
 
     let conversation;
 
-    if (!text && audio?.id) {
+    if (existingIncomingMessage) {
+      conversation = await prisma.conversation.findFirst({
+        where: {
+          id: existingIncomingMessage.conversationId,
+          restaurantId: restaurant.id,
+        },
+      });
+
+      if (!conversation) {
+        return NextResponse.json({ received: true });
+      }
+    } else if (!text && audio?.id) {
       const voiceResult = await processIncomingVoiceNote({
         restaurantId: restaurant.id,
         customerPhone: from,
@@ -124,6 +169,7 @@ export async function POST(request: NextRequest) {
     if (access && !access.allowed) {
       console.warn("WhatsApp automation paused because trial is expired:", {
         restaurantId: restaurant.id,
+        label: access.label,
       });
 
       return NextResponse.json({ received: true });
@@ -319,7 +365,7 @@ export async function POST(request: NextRequest) {
           message: text,
         });
 
-        await safeSendWhatsAppText({
+        const sendResult = await safeSendWhatsAppText({
           restaurantId: restaurant.id,
           to: from,
           message: fallbackReply,
@@ -329,6 +375,12 @@ export async function POST(request: NextRequest) {
           conversationId: conversation.id,
           message: fallbackReply,
         });
+
+        if ("skipped" in sendResult && sendResult.skipped) {
+          console.warn("WhatsApp reply generated but sending was skipped:", {
+            reason: sendResult.reason,
+          });
+        }
       }
 
       return NextResponse.json({ received: true });
