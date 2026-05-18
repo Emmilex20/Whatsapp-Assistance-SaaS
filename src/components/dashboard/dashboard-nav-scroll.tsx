@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useDashboardNotifications } from "@/components/dashboard/use-dashboard-notifications";
 import { dashboardLinks } from "@/lib/site";
 import type { DashboardNotificationCounts } from "@/lib/dashboard-notifications";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ export function DashboardNavScroll({
   onNavigate,
 }: DashboardNavScrollProps) {
   const pathname = usePathname();
+  const liveNotificationCounts = useDashboardNotifications(notificationCounts);
   const scrollRef = useRef<HTMLElement>(null);
   const [thumb, setThumb] = useState({
     height: 64,
@@ -103,7 +105,7 @@ export function DashboardNavScroll({
       >
         {dashboardLinks.map((item) => {
           const active = activeHref === item.href;
-          const notificationCount = notificationCounts[item.href] || 0;
+          const notificationCount = liveNotificationCounts[item.href] || 0;
           const hasNotification = notificationCount > 0;
 
           return (

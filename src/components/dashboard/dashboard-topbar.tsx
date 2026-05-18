@@ -1,6 +1,9 @@
+"use client";
+
 import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileSidebar } from "@/components/dashboard/mobile-sidebar";
+import { useDashboardNotifications } from "@/components/dashboard/use-dashboard-notifications";
 import type { DashboardNotificationCounts } from "@/lib/dashboard-notifications";
 
 type DashboardTopbarProps = {
@@ -10,7 +13,8 @@ type DashboardTopbarProps = {
 export function DashboardTopbar({
   notificationCounts = {},
 }: DashboardTopbarProps) {
-  const notificationTotal = Object.values(notificationCounts).reduce(
+  const liveNotificationCounts = useDashboardNotifications(notificationCounts);
+  const notificationTotal = Object.values(liveNotificationCounts).reduce(
     (sum, count) => sum + count,
     0
   );
@@ -56,7 +60,7 @@ export function DashboardTopbar({
             )}
           </Button>
 
-          <MobileSidebar notificationCounts={notificationCounts} />
+          <MobileSidebar notificationCounts={liveNotificationCounts} />
         </div>
       </div>
     </header>
