@@ -1,9 +1,14 @@
 import Image from "next/image";
+import Link from "next/link";
 import { appName } from "@/lib/site";
 
 export function Logo() {
   return (
-    <div className="flex items-center gap-2">
+    <Link
+      href="/"
+      aria-label="Go to ServeFlow homepage"
+      className="flex w-fit items-center gap-2 rounded-2xl transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+    >
       <Image
         src="/logo.png"
         alt={`${appName} logo`}
@@ -19,6 +24,6 @@ export function Logo() {
         </p>
         <p className="text-[11px] text-zinc-400">Business Assistant</p>
       </div>
-    </div>
+    </Link>
   );
 }
