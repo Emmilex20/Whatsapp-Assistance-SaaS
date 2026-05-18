@@ -21,6 +21,40 @@ function getMenuPhrases(item: MenuItemCandidate) {
   );
 }
 
+const genericMessageTokens = new Set([
+  "hello",
+  "hi",
+  "hey",
+  "ok",
+  "okay",
+  "yes",
+  "yeah",
+  "no",
+  "nope",
+  "thanks",
+  "thank",
+  "you",
+  "please",
+  "pls",
+  "cancel",
+  "stop",
+  "status",
+  "update",
+]);
+
+function getTokens(value: string) {
+  return normalize(value).split(" ").filter(Boolean);
+}
+
+function shouldSkipMenuMatching(normalizedMessage: string) {
+  const tokens = getTokens(normalizedMessage);
+
+  if (!tokens.length) return true;
+  if (tokens.length === 1 && tokens[0].length < 4) return true;
+
+  return tokens.every((token) => genericMessageTokens.has(token));
+}
+
 export function findBestMenuItemMatch<T extends MenuItemCandidate>({
   message,
   menuItems,
@@ -30,7 +64,18 @@ export function findBestMenuItemMatch<T extends MenuItemCandidate>({
 }) {
   const normalizedMessage = normalize(message);
 
-  if (!normalizedMessage || !menuItems.length) return null;
+  if (
+    !normalizedMessage ||
+    !menuItems.length ||
+    shouldSkipMenuMatching(normalizedMessage)
+  ) {
+    return null;
+  }
+
+  const messageTokens = getTokens(normalizedMessage);
+  const canUsePartialMessageMatch =
+    normalizedMessage.length >= 4 &&
+    !messageTokens.every((token) => genericMessageTokens.has(token));
 
   const scored = menuItems
     .map((item) => {
@@ -39,7 +84,8 @@ export function findBestMenuItemMatch<T extends MenuItemCandidate>({
         normalizedName.length >= 3 &&
         (normalizedMessage === normalizedName ||
           normalizedMessage.includes(normalizedName) ||
-          normalizedName.includes(normalizedMessage));
+          (canUsePartialMessageMatch &&
+            normalizedName.includes(normalizedMessage)));
 
       const score = directNameMatch
         ? 1

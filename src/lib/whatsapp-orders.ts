@@ -53,6 +53,24 @@ ${addressLine}
 You can send your delivery address, ask for an update, or type "cancel order" if you want to cancel.`;
 }
 
+function buildCasualActiveOrderReply(order: OrderWithItems) {
+  const items = formatOrderItems(order);
+
+  if (!order.deliveryAddress) {
+    return `Hi. I still have your order for ${items} open.
+
+Please send your delivery address when you are ready, or type "cancel order" if you want to stop it.`;
+  }
+
+  return `Hi. I still have your order for ${items} open.
+
+You can ask for an update, or type "cancel order" if you want to stop it.`;
+}
+
+function shouldIgnorePassiveMessageWithoutOrder(intent: string) {
+  return ["greeting", "thanks", "negative"].includes(intent);
+}
+
 async function markConversationForHuman({
   restaurantId,
   conversationId,
@@ -149,7 +167,9 @@ export async function handleWhatsAppOrder({
         order: cancelledOrder,
         reply: `No problem. I have cancelled your order for ${formatOrderItems(
           cancelledOrder
-        )}.`,
+        )}.
+
+If you want to order something else, send the food name or ask for the menu.`,
       };
     }
 
@@ -178,7 +198,7 @@ export async function handleWhatsAppOrder({
     if (intent === "greeting") {
       return {
         order: existingActiveOrder,
-        reply: `Hello. ${buildActiveOrderReply(existingActiveOrder)}`,
+        reply: buildCasualActiveOrderReply(existingActiveOrder),
       };
     }
 
@@ -284,6 +304,24 @@ Please send your delivery address so we can continue. If you want to cancel, typ
     };
   }
 
+  const intent = getCustomerMessageIntent(message);
+
+  if (intent === "cancel_order") {
+    return {
+      order: null,
+      reply:
+        "There is no active order to cancel right now. If you want to order, send the food name or ask for the menu.",
+    };
+  }
+
+  if (intent === "order_status") {
+    return {
+      order: null,
+      reply:
+        "I do not see an active order for this chat right now. You can send the food name you want, or ask for the menu.",
+    };
+  }
+
   const menuItems = await prisma.menuItem.findMany({
     where: {
       restaurantId,
@@ -295,7 +333,6 @@ Please send your delivery address so we can continue. If you want to cancel, typ
     message,
     menuItems,
   });
-  const intent = getCustomerMessageIntent(message);
 
   if (intent === "price_check" && matchedMenuItem) {
     return {
@@ -304,6 +341,22 @@ Please send your delivery address so we can continue. If you want to cancel, typ
 
 If you would like to order it, just reply with "${matchedMenuItem.name}" or send your delivery address after ordering.`,
     };
+  }
+
+  if (
+    shouldIgnorePassiveMessageWithoutOrder(intent) &&
+    !isOrderIntent(message) &&
+    !matchedMenuItem
+  ) {
+    return null;
+  }
+
+  if (
+    intent === "affirmative" &&
+    !isOrderIntent(message) &&
+    !matchedMenuItem
+  ) {
+    return null;
   }
 
   if (!isOrderIntent(message) && !matchedMenuItem) {

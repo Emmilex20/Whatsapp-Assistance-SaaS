@@ -10,13 +10,13 @@ export function buildRuleBasedCustomerReply({
   const intent = getCustomerMessageIntent(message);
 
   if (intent === "greeting") {
-    return `Hello. Welcome to ${restaurantName}.
+    return `Hi, welcome to ${restaurantName}.
 
-You can ask for the menu, delivery fee, opening hours, or type the food name you want to order.`;
+What would you like to do today? You can ask for the menu, ask about delivery, or just send the food name you want.`;
   }
 
   if (intent === "thanks") {
-    return "You are welcome.";
+    return "You are welcome. I am here if you need anything else.";
   }
 
   if (intent === "price_check") {
@@ -28,10 +28,10 @@ You can ask for the menu, delivery fee, opening hours, or type the food name you
   }
 
   if (intent === "negative") {
-    return `No problem. You can ask for the menu, delivery fee, opening hours, or type a food name whenever you are ready.`;
+    return `No problem. Whenever you are ready, you can ask for the menu, delivery fee, opening hours, or type a food name.`;
   }
 
-  return `I can help with menu, prices, delivery, opening hours, and orders.
+  return `I want to make sure I understand you correctly.
 
-You can type a food name like "jollof rice", ask "how much is burger?", or send "menu" to see available items.`;
+You can ask for the menu, ask about delivery, check a price, or type the food name you want to order.`;
 }

@@ -17,8 +17,21 @@ function normalizeMessage(message: string) {
     .trim();
 }
 
+function normalizePhrase(phrase: string) {
+  return normalizeMessage(phrase);
+}
+
 function includesAny(message: string, phrases: string[]) {
-  return phrases.some((phrase) => message.includes(phrase));
+  const paddedMessage = ` ${message} `;
+
+  return phrases.some((phrase) => {
+    const normalizedPhrase = normalizePhrase(phrase);
+
+    return (
+      message === normalizedPhrase ||
+      paddedMessage.includes(` ${normalizedPhrase} `)
+    );
+  });
 }
 
 const cancelPhrases = [
