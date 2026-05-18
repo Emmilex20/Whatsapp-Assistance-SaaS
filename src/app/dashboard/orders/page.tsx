@@ -3,6 +3,7 @@ import { Clock, Eye, MapPin, Plus, ShoppingBag, UserRound } from "lucide-react";
 import type { OrderStatus } from "@/generated/prisma/client";
 import { assignOrder } from "@/actions/assignments";
 import { confirmOrder, updateOrderStatus } from "@/actions/orders";
+import { OrdersFilterBar } from "@/components/orders/orders-filter-bar";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AssignmentSelect } from "@/components/team/assignment-select";
 import { Button } from "@/components/ui/button";
@@ -84,23 +85,6 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
       })
     : [];
 
-  function ordersFilterHref({
-    assigned = assignedFilter,
-    status = statusFilter,
-  }: {
-    assigned?: string;
-    status?: string;
-  }) {
-    const nextParams = new URLSearchParams();
-
-    if (assigned && assigned !== "all") nextParams.set("assigned", assigned);
-    if (status && status !== "all") nextParams.set("status", status);
-
-    const query = nextParams.toString();
-
-    return query ? `/dashboard/orders?${query}` : "/dashboard/orders";
-  }
-
   return (
     <div className="space-y-6">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -122,73 +106,11 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         </Link>
       </section>
 
-      <section className="space-y-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Filter by assignment
-          </p>
-
-          <div className="action-row">
-            <a
-              href={ordersFilterHref({ assigned: "all" })}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                assignedFilter === "all"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              All orders
-            </a>
-
-            <a
-              href={ordersFilterHref({ assigned: "unassigned" })}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                assignedFilter === "unassigned"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              Unassigned
-            </a>
-
-            {teamMembers.map((member) => (
-              <a
-                key={member.id}
-                href={ordersFilterHref({ assigned: member.id })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  assignedFilter === member.id
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {member.name || member.email}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Filter by status
-          </p>
-
-          <div className="action-row">
-            {statusFilters.map((status) => (
-              <a
-                key={status}
-                href={ordersFilterHref({ status })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  statusFilter === status
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {status === "all" ? "All statuses" : status.toLowerCase()}
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      <OrdersFilterBar
+        assignedFilter={assignedFilter}
+        statusFilter={statusFilter}
+        teamMembers={teamMembers}
+      />
 
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5">

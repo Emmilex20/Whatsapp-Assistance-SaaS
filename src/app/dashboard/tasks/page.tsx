@@ -7,6 +7,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
+import { TasksFilterBar } from "@/components/tasks/tasks-filter-bar";
 import { getOrCreateCurrentRestaurant } from "@/lib/current-restaurant";
 import { prisma } from "@/lib/prisma";
 import { getStaffTasks } from "@/lib/staff-tasks";
@@ -106,26 +107,6 @@ export default async function StaffTasksPage({ searchParams }: TasksPageProps) {
     ),
   };
 
-  function tasksFilterHref({
-    staff = staffFilter,
-    type = typeFilter,
-    urgency = urgencyFilter,
-  }: {
-    staff?: string;
-    type?: string;
-    urgency?: string;
-  }) {
-    const query = new URLSearchParams();
-
-    if (staff && staff !== "all") query.set("staff", staff);
-    if (type && type !== "all") query.set("type", type);
-    if (urgency && urgency !== "all") query.set("urgency", urgency);
-
-    const queryString = query.toString();
-
-    return queryString ? `/dashboard/tasks?${queryString}` : "/dashboard/tasks";
-  }
-
   return (
     <div className="space-y-6">
       <section>
@@ -141,93 +122,12 @@ export default async function StaffTasksPage({ searchParams }: TasksPageProps) {
         </p>
       </section>
 
-      <section className="space-y-4 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Staff member
-          </p>
-
-          <div className="action-row">
-            <Link
-              href={tasksFilterHref({ staff: "all" })}
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                staffFilter === "all"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              All staff
-            </Link>
-
-            {teamMembers.map((member) => (
-              <Link
-                key={member.id}
-                href={tasksFilterHref({ staff: member.id })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  staffFilter === member.id
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {member.name || member.email}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Task type
-          </p>
-
-          <div className="action-row">
-            {[
-              { label: "All tasks", value: "all" },
-              { label: "Chats", value: "chats" },
-              { label: "Orders", value: "orders" },
-              { label: "Campaign posts", value: "posts" },
-            ].map((item) => (
-              <Link
-                key={item.value}
-                href={tasksFilterHref({ type: item.value })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  typeFilter === item.value
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
-            Urgency
-          </p>
-
-          <div className="action-row">
-            {[
-              { label: "All urgency", value: "all" },
-              { label: "Overdue posts", value: "overdue" },
-              { label: "Due today", value: "due_today" },
-            ].map((item) => (
-              <Link
-                key={item.value}
-                href={tasksFilterHref({ urgency: item.value })}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  urgencyFilter === item.value
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.04] text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TasksFilterBar
+        staffFilter={staffFilter}
+        typeFilter={typeFilter}
+        urgencyFilter={urgencyFilter}
+        teamMembers={teamMembers}
+      />
 
       {staffFilter !== "all" && (
         <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
