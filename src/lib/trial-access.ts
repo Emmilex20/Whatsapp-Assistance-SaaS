@@ -77,24 +77,31 @@ export async function getCurrentTrialAccessStatus() {
   const subscription = await getRestaurantBilling(restaurant.id);
 
   return getTrialAccessStatus({
-    user,
+    user: restaurant,
     subscription,
   });
 }
 
 export async function canUseRestaurantAfterTrial(restaurantId: string) {
-  const user = await getCurrentDbUser();
+  const restaurant = await prisma.restaurant.findUnique({
+    where: {
+      id: restaurantId,
+    },
+    include: {
+      subscription: true,
+    },
+  });
 
-  if (!user) {
+  if (!restaurant) {
     return {
       allowed: false,
-      reason: "User not found.",
+      reason: "Restaurant not found.",
     };
   }
 
-  const subscription = await getRestaurantBilling(restaurantId);
+  const subscription = restaurant.subscription;
   const access = getTrialAccessStatus({
-    user,
+    user: restaurant,
     subscription,
   });
 
@@ -113,7 +120,6 @@ export async function getRestaurantTrialAccessStatus(restaurantId: string) {
       id: restaurantId,
     },
     include: {
-      owner: true,
       subscription: true,
     },
   });
@@ -121,7 +127,7 @@ export async function getRestaurantTrialAccessStatus(restaurantId: string) {
   if (!restaurant) return null;
 
   return getTrialAccessStatus({
-    user: restaurant.owner,
+    user: restaurant,
     subscription: restaurant.subscription,
   });
 }
