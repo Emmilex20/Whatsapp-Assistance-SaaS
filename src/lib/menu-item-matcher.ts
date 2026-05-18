@@ -50,7 +50,7 @@ function shouldSkipMenuMatching(normalizedMessage: string) {
   const tokens = getTokens(normalizedMessage);
 
   if (!tokens.length) return true;
-  if (tokens.length === 1 && tokens[0].length < 4) return true;
+  if (tokens.length === 1 && tokens[0].length < 3) return true;
 
   return tokens.every((token) => genericMessageTokens.has(token));
 }
@@ -74,7 +74,7 @@ export function findBestMenuItemMatch<T extends MenuItemCandidate>({
 
   const messageTokens = getTokens(normalizedMessage);
   const canUsePartialMessageMatch =
-    normalizedMessage.length >= 4 &&
+    normalizedMessage.length >= 3 &&
     !messageTokens.every((token) => genericMessageTokens.has(token));
 
   const scored = menuItems
