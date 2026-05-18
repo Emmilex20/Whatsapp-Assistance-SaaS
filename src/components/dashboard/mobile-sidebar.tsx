@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { DashboardNavScroll } from "@/components/dashboard/dashboard-nav-scroll";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
+import type { DashboardNotificationCounts } from "@/lib/dashboard-notifications";
 import {
   Sheet,
   SheetContent,
@@ -12,7 +13,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-export function MobileSidebar() {
+type MobileSidebarProps = {
+  notificationCounts?: DashboardNotificationCounts;
+};
+
+export function MobileSidebar({ notificationCounts = {} }: MobileSidebarProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,7 +42,10 @@ export function MobileSidebar() {
           <Logo />
         </div>
 
-        <DashboardNavScroll onNavigate={() => setOpen(false)} />
+        <DashboardNavScroll
+          notificationCounts={notificationCounts}
+          onNavigate={() => setOpen(false)}
+        />
       </SheetContent>
     </Sheet>
   );

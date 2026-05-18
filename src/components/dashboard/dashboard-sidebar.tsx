@@ -5,8 +5,15 @@ import {
 } from "@/lib/current-restaurant";
 import { RestaurantSwitcher } from "@/components/dashboard/restaurant-switcher";
 import { Logo } from "@/components/shared/logo";
+import type { DashboardNotificationCounts } from "@/lib/dashboard-notifications";
 
-export async function DashboardSidebar() {
+type DashboardSidebarProps = {
+  notificationCounts?: DashboardNotificationCounts;
+};
+
+export async function DashboardSidebar({
+  notificationCounts = {},
+}: DashboardSidebarProps) {
   const restaurants = await getUserRestaurants();
   const activeRestaurant = await getCurrentRestaurant();
 
@@ -21,7 +28,7 @@ export async function DashboardSidebar() {
         />
       </div>
 
-      <DashboardNavScroll />
+      <DashboardNavScroll notificationCounts={notificationCounts} />
     </aside>
   );
 }

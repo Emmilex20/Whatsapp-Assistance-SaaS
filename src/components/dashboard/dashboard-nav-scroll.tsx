@@ -4,13 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { dashboardLinks } from "@/lib/site";
+import type { DashboardNotificationCounts } from "@/lib/dashboard-notifications";
 import { cn } from "@/lib/utils";
 
 type DashboardNavScrollProps = {
+  notificationCounts?: DashboardNotificationCounts;
   onNavigate?: () => void;
 };
 
-export function DashboardNavScroll({ onNavigate }: DashboardNavScrollProps) {
+export function DashboardNavScroll({
+  notificationCounts = {},
+  onNavigate,
+}: DashboardNavScrollProps) {
   const pathname = usePathname();
   const scrollRef = useRef<HTMLElement>(null);
   const [thumb, setThumb] = useState({
@@ -98,6 +103,8 @@ export function DashboardNavScroll({ onNavigate }: DashboardNavScrollProps) {
       >
         {dashboardLinks.map((item) => {
           const active = activeHref === item.href;
+          const notificationCount = notificationCounts[item.href] || 0;
+          const hasNotification = notificationCount > 0;
 
           return (
             <Link
@@ -132,7 +139,7 @@ export function DashboardNavScroll({ onNavigate }: DashboardNavScrollProps) {
 
               <span
                 className={cn(
-                  "relative min-w-0 truncate transition",
+                  "relative min-w-0 flex-1 truncate transition",
                   active
                     ? "font-semibold text-white"
                     : "font-medium text-zinc-400 group-hover:text-white"
@@ -140,6 +147,21 @@ export function DashboardNavScroll({ onNavigate }: DashboardNavScrollProps) {
               >
                 {item.label}
               </span>
+
+              {hasNotification && (
+                <span
+                  aria-label={`${notificationCount} notification${
+                    notificationCount === 1 ? "" : "s"
+                  }`}
+                  className="relative ml-auto flex h-3 w-3 shrink-0"
+                  title={`${notificationCount} notification${
+                    notificationCount === 1 ? "" : "s"
+                  }`}
+                >
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-60" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full border border-red-200/80 bg-red-500 shadow-[0_0_14px_rgba(248,113,113,0.9)]" />
+                </span>
+              )}
             </Link>
           );
         })}
